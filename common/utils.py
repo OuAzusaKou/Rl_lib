@@ -1,3 +1,5 @@
+import os
+
 import torch as th
 from typing import Iterable, Optional, Union, Tuple, Dict
 import numpy as np
@@ -223,3 +225,15 @@ def get_linear_fn(start: float, end: float, end_fraction: float) -> Schedule:
             return start + (1 - progress_remaining) * (end - start) / end_fraction
 
     return func
+
+def scan_root(root_):
+    file_list = []
+    dir_list = []
+
+    for root, dirs, files in os.walk(root_):
+        for dir in dirs:
+            dir_list.append(os.path.join(root, dir))
+
+        for file in files:
+            file_list.append(os.path.join(root, file))
+    return file_list, dir_list

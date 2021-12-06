@@ -18,17 +18,41 @@ DDPG_agent = Agent
 
 data_collection = Replay_buffer
 
+functor_dict = {}
+
+lr_dict = {}
+
+updator_dict = {}
+
+functor_dict['actor'] = actor
+
+functor_dict['critic'] = critic
+
+functor_dict['actor_target'] = None
+
+functor_dict['critic_target'] = None
+
+lr_dict['actor'] = 1e-3
+
+lr_dict['critic'] = 1e-3
+
+lr_dict['actor_target'] = 1e-3
+
+lr_dict['critic_target'] = 1e-3
+
+updator_dict['actor_update'] = actor_updator_ddpg
+
+updator_dict['critic_update'] = critic_updator_ddpg
+
+updator_dict['soft_update'] = soft_update
+
 ddpg = BaseAlgorithm(agent_class=DDPG_agent,
-                     actor=actor,
-                     critic=critic,
-                     critic_update=critic_updator_ddpg,
-                     actor_update=actor_updator_ddpg,
-                     soft_update=soft_update,
+                     functor_dict=functor_dict,
+                     lr_dict=lr_dict,
+                     updator_dict=updator_dict,
                      data_collection=data_collection,
                      env=env,
-                     train=None,
                      buffer_size=1e6,
-                     learning_rate=4e-4,
                      gamma=0.99,
                      batch_size=100,
                      tensorboard_log="./DQN_tensorboard/",
@@ -36,10 +60,7 @@ ddpg = BaseAlgorithm(agent_class=DDPG_agent,
                      action_noise=0.1,
                      min_update_step=1000,
                      update_step=100,
-                     lr_actor=1e-3,
-                     lr_critic=1e-3,
                      polyak=0.995,
-
                      )
 
 ddpg.learn(num_train_step=1000000)

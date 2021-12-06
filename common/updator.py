@@ -39,10 +39,10 @@ def ddpg_step(policy_net, policy_net_target, value_net, value_net_target, optimi
 
 
 def critic_updator_ddpg(agent, state, action, reward, next_state, done_value, gamma, ):
-    value = agent.critic(state, action)
+    value = agent.functor_dict['critic'](state, action)
     # print(value.mean())
     with torch.no_grad():
-        target_next_value = agent.critic_target(next_state, agent.actor_target(next_state))
+        target_next_value = agent.functor_dict['critic_target'](next_state, agent.functor_dict['actor_target'](next_state))
         # print('reward', reward.shape)
         target_value = reward + gamma * (done_value) * target_next_value
     # print('done', done_value)
@@ -51,9 +51,9 @@ def critic_updator_ddpg(agent, state, action, reward, next_state, done_value, ga
     # print('value', value.mean())
     value_loss = nn.MSELoss()(value, target_value)
     # print('loss',value_loss)
-    agent.optimizer_critic.zero_grad()
+    agent.optimizer_dict['critic'].zero_grad()
     value_loss.backward()
-    agent.optimizer_critic.step()
+    agent.optimizer_dict['critic'].step()
     # for name, parms in agent.critic.named_parameters():
     #     print('-->name:', name, '-->grad_requirs:', parms.requires_grad, \
     #           ' -->grad_value:', parms.grad)
@@ -62,16 +62,16 @@ def critic_updator_ddpg(agent, state, action, reward, next_state, done_value, ga
 
 
 def actor_updator_ddpg(agent, state, action, reward, next_state, gamma):
-    for p in agent.critic.parameters():
+    for p in agent.functor_dict['critic'].parameters():
         p.requires_grad = False
 
-    policy_loss = - agent.critic(state, agent.actor(state)).mean()
+    policy_loss = - agent.functor_dict['critic'](state, agent.functor_dict['actor'](state)).mean()
     # print(policy_loss)
-    agent.optimizer_actor.zero_grad()
+    agent.optimizer_dict['actor'].zero_grad()
     policy_loss.backward()
-    agent.optimizer_actor.step()
+    agent.optimizer_dict['actor'].step()
 
-    for p in agent.critic.parameters():
+    for p in agent.functor_dict['critic'].parameters():
         p.requires_grad = True
     return
 
@@ -136,12 +136,12 @@ def actor_updator_gail(agent,state):
 
 def critic_updator_dqn(agent, state, action, reward, next_state, done_value, gamma, ):
     #print(action.shape)
-    value = torch.gather(agent.critic(state), dim=1, index=action.long())
+    value = torch.gather(agent.functor_dict['critic'](state), dim=1, index=action.long())
     #print(value.shape)
     with torch.no_grad():
-        next_action = torch.argmax(agent.critic(next_state), dim=1).reshape((-1, 1))
+        next_action = torch.argmax(agent.functor_dict['critic'](next_state), dim=1).reshape((-1, 1))
 
-        target_next_value = torch.gather(agent.critic(next_state), dim=1, index=next_action.long())
+        target_next_value = torch.gather(agent.functor_dict['critic'](next_state), dim=1, index=next_action.long())
         # print('reward', reward.shape)
         target_value = reward + gamma * (done_value) * target_next_value
     # print('done', done_value)
@@ -150,9 +150,9 @@ def critic_updator_dqn(agent, state, action, reward, next_state, done_value, gam
     # print('value', value.mean())
     value_loss = nn.MSELoss()(value, target_value)
     # print('loss',value_loss)
-    agent.optimizer_critic.zero_grad()
+    agent.optimizer_dict['critic'].zero_grad()
     value_loss.backward()
-    agent.optimizer_critic.step()
+    agent.optimizer_dict['critic'].step()
     # for name, parms in agent.critic.named_parameters():
     #     print('-->name:', name, '-->grad_requirs:', parms.requires_grad, \
     #           ' -->grad_value:', parms.grad)

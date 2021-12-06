@@ -5,7 +5,6 @@ from typing import Dict, Any
 import numpy as np
 import torch
 
-
 # import spinup.ddpg
 from matplotlib import pyplot as plt
 from tensorboardX import SummaryWriter
@@ -17,28 +16,19 @@ class BaseAlgorithm:
     def __init__(
             self,
             agent_class,
-            critic_update: None,
-            actor_update: None,
             data_collection: None,
             env: None,
-            train: None,
-            soft_update: None,
-            actor: None,
-            critic: None,
+            updator_dict=None,
+            functor_dict=None,
+            optimizer_dict=None,
+            lr_dict=None,
             exploration_rate: float = 0.1,
             exploration_start: float = 1,
             exploration_end: float = 0.05,
             exploration_fraction: float = 0.2,
             polyak: float = 0.9,
-            optimizer_actor: [torch.optim.Adam] = torch.optim.Adam,
-            optimizer_critic: [torch.optim.Adam] = torch.optim.Adam,
-            optimizer_discriminator: [torch.optim.Adam] = torch.optim.Adam,
             agent_args: Dict[str, Any] = None,
-            discriminator: [Any] = None,
-            lr_actor: float = 1e-2,
-            lr_critic: float = 1e-2,
             buffer_size: int = 1e5,
-            learning_rate: float = 4e-4,
             gamma: float = 0.95,
             batch_size: int = 512,
             tensorboard_log: str = "./DQN_tensorboard/",
@@ -59,37 +49,21 @@ class BaseAlgorithm:
                                               end=exploration_end,
                                               end_fraction=self.exploration_fraction)
 
-
         if agent_args:
 
-            self.agent = agent_class(Actor=actor,
-                                     Critic=critic,
-                                     Discriminator=discriminator,
-                                     env=self.env,
-                                     optimizer_actor=optimizer_actor,
-                                     optimizer_critic=optimizer_critic,
-                                     optimizer_discriminator=optimizer_discriminator,
-                                     lr_actor=lr_actor,
-                                     lr_critic=lr_critic,
+            self.agent = agent_class(functor_dict=functor_dict,
+                                     optimizer_dict=optimizer_dict,
+                                     lr_dict=lr_dict,
                                      **agent_args)
         else:
-            self.agent = agent_class(Actor=actor,
-                                     Critic=critic,
-                                     Discriminator=discriminator,
-                                     optimizer_actor=optimizer_actor,
-                                     optimizer_critic=optimizer_critic,
-                                     optimizer_discriminator=optimizer_discriminator,
-                                     lr_actor=lr_actor,
-                                     lr_critic=lr_critic,
+            self.agent = agent_class(functor_dict=functor_dict,
+                                     optimizer_dict=optimizer_dict,
+                                     lr_dict=lr_dict,
                                      )
 
-        self.critic_update = critic_update
-
-        self.actor_update = actor_update
+        self.updator_dict = updator_dict
 
         self.data_collection = data_collection(env=env, size=buffer_size)
-
-        self.train = train
 
         self.render = render
 
@@ -103,16 +77,14 @@ class BaseAlgorithm:
 
         self.gamma = gamma
 
-        self.soft_update = soft_update
-
         self.polyak = polyak
 
         self.start_steps = start_steps
 
     def learn(self, num_train_step):
         """interact"""
-        self.agent.actor.train()
-        self.agent.critic.train()
+        self.agent.functor_dict['actor'].train()
+        self.agent.functor_dict['critic'].train()
         # self.agent.actor_target.train()
         # self.agent.critic_target.train()
         step = 0
@@ -145,33 +117,37 @@ class BaseAlgorithm:
                 if step >= self.min_update_step and step % self.update_step == 0:
                     for _ in range(self.update_step):
                         batch = self.data_collection.sample_batch(self.batch_size)  # random sample batch
-                        self.critic_update(self.agent, state=batch['state'], action=batch['action'],
-                                           reward=batch['reward'], next_state=batch['next_state'],
-                                           done_value=batch['done'], gamma=self.gamma)
+                        self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
+                                                           reward=batch['reward'], next_state=batch['next_state'],
+                                                           done_value=batch['done'], gamma=self.gamma)
 
-                        self.actor_update(self.agent, state=batch['state'], action=batch['action'],
-                                          reward=batch['reward'], next_state=batch['next_state'], gamma=self.gamma)
+                        self.updator_dict['actor_update'](self.agent, state=batch['state'], action=batch['action'],
+                                                          reward=batch['reward'], next_state=batch['next_state'],
+                                                          gamma=self.gamma)
 
-                        self.soft_update(self.agent.actor_target, self.agent.actor, polyak=self.polyak)
+                        self.updator_dict['soft_update'](self.agent.functor_dict['actor_target'],
+                                                         self.agent.functor_dict['actor'],
+                                                         polyak=self.polyak)
 
-                        self.soft_update(self.agent.critic_target, self.agent.critic, polyak=self.polyak)
+                        self.updator_dict['soft_update'](self.agent.functor_dict['critic_target'],
+                                                         self.agent.functor_dict['critic'],
+                                                         polyak=self.polyak)
 
                 step += 1
 
                 if done:
-
                     self.writer.add_scalar('episode_reward', episode_reward, global_step=step)
 
                     break
 
+
 class DQNAlgorithm(BaseAlgorithm):
     def learn(self, num_train_step):
         """interact"""
-        self.agent.critic.train()
+        self.agent.functor_dict['critic'].train()
         # self.agent.actor_target.train()
         # self.agent.critic_target.train()
         step = 0
-
 
         while step <= (num_train_step):
 
@@ -194,7 +170,6 @@ class DQNAlgorithm(BaseAlgorithm):
 
                     action = self.env.action_space.sample()
 
-
                 next_state, reward, done, _ = self.env.step(action)
 
                 done_value = 0 if done else 1
@@ -208,20 +183,79 @@ class DQNAlgorithm(BaseAlgorithm):
                 if step >= self.min_update_step and step % self.update_step == 0:
                     for _ in range(self.update_step):
                         batch = self.data_collection.sample_batch(self.batch_size)  # random sample batch
-                        self.critic_update(self.agent, state=batch['state'], action=batch['action'],
+                        self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
                                            reward=batch['reward'], next_state=batch['next_state'],
                                            done_value=batch['done'], gamma=self.gamma)
 
                 step += 1
 
-                self.exploration_rate = self.exploration_func((1 - step/num_train_step))
+                self.exploration_rate = self.exploration_func((1 - step / num_train_step))
 
                 if done:
-
                     self.writer.add_scalar('episode_reward_step', episode_reward, global_step=step)
                     self.writer.add_scalar('exploration_rate_step', self.exploration_rate, global_step=step)
                     break
 
+
+class SACAlgorithm(BaseAlgorithm):
+    def learn(self, num_train_step):
+        """interact"""
+        self.agent.functor_dict['actor'].train()
+        self.agent.functor_dict['critic'].train()
+        # self.agent.actor_target.train()
+        # self.agent.critic_target.train()
+        step = 0
+
+        while step <= (num_train_step):
+
+            state = self.env.reset()
+            episode_reward = 0
+
+            while True:
+
+                if self.render:
+                    self.env.render()
+
+                if step >= self.start_steps:
+                    action = self.agent.choose_action(state, self.action_noise)
+                else:
+                    action = self.env.action_space.sample()
+                # print(action)
+                next_state, reward, done, _ = self.env.step(action)
+
+                done_value = 0 if done else 1
+                # ('state', 'action', 'reward', 'next_state', 'mask', 'log_prob')
+                self.data_collection.store(state, action, reward, next_state, done_value)
+
+                state = next_state
+
+                episode_reward += reward
+
+                if step >= self.min_update_step and step % self.update_step == 0:
+                    for _ in range(self.update_step):
+                        batch = self.data_collection.sample_batch(self.batch_size)  # random sample batch
+                        self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
+                                                           reward=batch['reward'], next_state=batch['next_state'],
+                                                           done_value=batch['done'], gamma=self.gamma)
+
+                        self.updator_dict['actor_update'](self.agent, state=batch['state'], action=batch['action'],
+                                                          reward=batch['reward'], next_state=batch['next_state'],
+                                                          gamma=self.gamma)
+
+                        self.updator_dict['soft_update'](self.agent.functor_dict['actor_target'],
+                                                         self.agent.functor_dict['actor'],
+                                                         polyak=self.polyak)
+
+                        self.updator_dict['soft_update'](self.agent.functor_dict['critic_target'],
+                                                         self.agent.functor_dict['critic'],
+                                                         polyak=self.polyak)
+
+                step += 1
+
+                if done:
+                    self.writer.add_scalar('episode_reward', episode_reward, global_step=step)
+
+                    break
 
 
 class MAAlgorithm:
@@ -386,7 +420,7 @@ class MAAlgorithm:
                 if before_done:
                     action = None
 
-                #print(action)
+                # print(action)
                 self.env.step(action)
 
                 before_done_value = 0 if before_done else 1
@@ -426,13 +460,14 @@ class MAAlgorithm:
                         self.soft_update(self.agent_list[agent_num].critic_target, self.agent_list[agent_num].critic,
                                          polyak=self.polyak)
 
-                #step += 1
+                # step += 1
 
                 if before_done:
                     # if step % 2000 == 0:
                     print(agent_name, self.episode_reward_dict[agent_name])
                 if step >= self.min_update_step and step % self.save_step == 0:
-                    self.agent_list[agent_num].save(actor_address='ac'+str(agent_num), critic_address='cri'+str(agent_num))
+                    self.agent_list[agent_num].save(actor_address='ac' + str(agent_num),
+                                                    critic_address='cri' + str(agent_num))
 
 
 class MAGAAlgorithms(MAAlgorithm):
@@ -507,7 +542,7 @@ class MAGAAlgorithms(MAAlgorithm):
                                              actor_update=actor_update,
                                              discriminator_update=discriminator_update,
                                              data_collection_list=data_collection_list,
-                                             data_collection_args_dict = data_collection_args_dict,
+                                             data_collection_args_dict=data_collection_args_dict,
                                              env=env,
                                              train=train,
                                              soft_update=soft_update,
@@ -567,7 +602,8 @@ class MAGAAlgorithms(MAAlgorithm):
             # init operation for training.
             for agent_name in self.env.agents:
                 self.collect_flag[agent_name] = False
-                self.writer.add_scalar('episode_reward'+str(agent_name), self.episode_reward_dict[agent_name],global_step = step * self.update_step)
+                self.writer.add_scalar('episode_reward' + str(agent_name), self.episode_reward_dict[agent_name],
+                                       global_step=step * self.update_step)
                 self.episode_reward_dict[agent_name] = 0
             # scan all agents and turn to next step automatically.
             for agent_name in self.env.agent_iter():
@@ -596,9 +632,8 @@ class MAGAAlgorithms(MAAlgorithm):
                     # acting as demonstrator agent
                     action = self.data_collection_list[agent_num].demonstrator_agent.choose_action(state, 0)
                     # this sample from demonstrator.
-                    #action = np.array([0,1])
+                    # action = np.array([0,1])
                     label = 1
-
 
                 if self.collect_flag[agent_name]:
                     # print('action', self.before_action_list[agent_name])
@@ -625,7 +660,6 @@ class MAGAAlgorithms(MAAlgorithm):
                 # no need for gamail.
                 before_done_value = 0 if before_done else 1
 
-
                 self.before_state_list[agent_name] = state
 
                 self.before_action_list[agent_name] = action
@@ -637,18 +671,18 @@ class MAGAAlgorithms(MAAlgorithm):
                     if discriminator_flag:
                         discriminator_flag = False
                         for i in range(self.update_step):
-
                             # sample data from replay buffer.
                             batch = self.data_collection_list[agent_num].sample_batch(
                                 self.batch_size)  # random sample batch
                             # update actor
                             discriminator_rate = self.actor_update(self.agent_list[agent_num], state=batch['state'])
 
-                            #discriminator_rate_list.append(discriminator_rate)
+                            # discriminator_rate_list.append(discriminator_rate)
                             # self.discriminator_update(self.agent_list[agent_num], state=batch['state'],
                             #                          action=batch['action'],
                             #                          label=batch['label'])
-                            self.writer.add_scalar('discriminator_rate'+str(agent_num), discriminator_rate, global_step=step * self.update_step + i)
+                            self.writer.add_scalar('discriminator_rate' + str(agent_num), discriminator_rate,
+                                                   global_step=step * self.update_step + i)
 
                     else:
                         discriminator_flag = True
@@ -656,16 +690,14 @@ class MAGAAlgorithms(MAAlgorithm):
                             # sample data from replay buffer.
                             batch = self.data_collection_list[agent_num].sample_batch(
                                 self.batch_size)  # random sample batch
-                            #print(len(self.data_collection_list[agent_num]))
+                            # print(len(self.data_collection_list[agent_num]))
                             # update actor
-                            #discriminator_rate = self.actor_update(self.agent_list[agent_num], state=batch['state'])
-                            #discriminator_rate_list.append(discriminator_rate)
+                            # discriminator_rate = self.actor_update(self.agent_list[agent_num], state=batch['state'])
+                            # discriminator_rate_list.append(discriminator_rate)
                             # update discriminator.
                             self.discriminator_update(self.agent_list[agent_num], state=batch['state'],
                                                       action=batch['action'],
                                                       label=batch['label'])
-
-
 
                 step += 1
 
