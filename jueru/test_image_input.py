@@ -1,12 +1,12 @@
 import gym
 import numpy as np
 
-from common.Agent_set import Agent
-from common.algorithms import BaseAlgorithm
-from common.datacollection import Replay_buffer
-from common.updator import critic_updator_ddpg, actor_updator_ddpg, soft_update
-from common.user.custom_actor_critic import ddpg_actor, ddpg_critic, FlattenExtractor
-from common.uav_env.uav_env import Uav_env
+from jueru.Agent_set import Agent
+from jueru.algorithms import BaseAlgorithm
+from jueru.datacollection import Replay_buffer
+from jueru.updator import critic_updator_ddpg, actor_updator_ddpg, soft_update
+from jueru.user.custom_actor_critic import ddpg_actor, ddpg_critic, FlattenExtractor
+from jueru.uav_env.uav_env import Uav_env
 
 #env = Uav_env(world_size=240, step_size=5, obstacle_num=5, max_step_num=100, display=False, fixed= False,obs_size = 66)
 

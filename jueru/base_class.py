@@ -5,13 +5,13 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 import gym
 import numpy as np
 import torch as th
-from common.type_aliases import MaybeCallback
+from jueru.type_aliases import MaybeCallback
 
-from common import logger
-from common.callbacks import BaseCallback
-from common.policies import BasePolicy
-from common.type_aliases import GymEnv, Schedule
-from common.utils import get_device, get_schedule_fn, update_learning_rate
+from jueru import logger
+from jueru.callbacks import BaseCallback
+from jueru.policies import BasePolicy
+from jueru.type_aliases import GymEnv, Schedule
+from jueru.utils import get_device, get_schedule_fn, update_learning_rate
 
 
 class BaseAlgorithm(ABC):

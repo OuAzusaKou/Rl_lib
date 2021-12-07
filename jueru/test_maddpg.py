@@ -1,11 +1,11 @@
 import gym
 
-from common.Agent_set import Agent
-from common.algorithms import BaseAlgorithm, MAAlgorithm, MAGAAlgorithms
-from common.datacollection import Replay_buffer, SignleReplay_buffer, GAIL_DataSet
-from common.updator import critic_updator_ddpg, actor_updator_ddpg, soft_update, discriminator_updator, \
+from jueru.Agent_set import Agent
+from jueru.algorithms import BaseAlgorithm, MAAlgorithm, MAGAAlgorithms
+from jueru.datacollection import Replay_buffer, SignleReplay_buffer, GAIL_DataSet
+from jueru.updator import critic_updator_ddpg, actor_updator_ddpg, soft_update, discriminator_updator, \
     actor_updator_gail
-from common.user.custom_actor_critic import MLPfeature_extractor, ddpg_actor, ddpg_critic
+from jueru.user.custom_actor_critic import MLPfeature_extractor, ddpg_actor, ddpg_critic
 from ma_env.ma_elec_env import wrapped_env
 
 elec = 135.5

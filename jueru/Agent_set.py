@@ -6,8 +6,8 @@ import gym
 import numpy as np
 import torch
 
-from common.utils import scan_root
-from common.weightinit import weight_init
+from jueru.utils import scan_root
+from jueru.weightinit import weight_init
 
 
 class Agent:
@@ -30,8 +30,12 @@ class Agent:
         if not self.optimizer_dict:
             self.optimizer_dict = {}
             for functor_name, functor in self.functor_dict.items():
-                self.optimizer_dict[functor_name] = torch.optim.Adam(params=functor.parameters(),
-                                                                     lr=self.lr_dict[functor_name])
+                if not isinstance(self.functor_dict[functor_name], torch.Tensor):
+                    self.optimizer_dict[functor_name] = torch.optim.Adam(params=functor.parameters(),
+                                                                         lr=self.lr_dict[functor_name])
+                else:
+                    self.optimizer_dict[functor_name] = torch.optim.Adam(params=[functor],
+                                                                         lr=self.lr_dict[functor_name])
         else:
             for functor_name, functor in self.functor_dict.items():
                 self.optimizer_dict[functor_name] = self.optimizer_dict[functor_name](params=functor.parameters(),
@@ -71,7 +75,8 @@ class Agent:
             if 'target' in functor_name:
                 self.functor_dict[functor_name] = copy.deepcopy(self.functor_dict[functor_name.split('_')[0]])
             else:
-                self.functor_dict[functor_name].apply(weight_init)
+                if not isinstance(self.functor_dict[functor_name], torch.Tensor):
+                    self.functor_dict[functor_name].apply(weight_init)
 
     def save(self, address):
         os.makedirs(address, exist_ok=True)
@@ -93,3 +98,22 @@ class Agent:
                     init=False,
                     )
         return agent
+
+class Sac_agent(Agent):
+
+    def select_action(self, obs):
+        with torch.no_grad():
+            obs = torch.FloatTensor(obs)
+            obs = obs.unsqueeze(0)
+            mu, _, _, _ = self.functor_dict['actor'](
+                obs, compute_pi=False, compute_log_pi=False
+            )
+            return mu.cpu().data.numpy().flatten()
+
+    def sample_action(self, obs):
+
+        with torch.no_grad():
+            obs = torch.FloatTensor(obs)
+            obs = obs.unsqueeze(0)
+            mu, pi, _, _ = self.functor_dict['actor'](obs, compute_log_pi=False)
+            return pi.cpu().data.numpy().flatten()

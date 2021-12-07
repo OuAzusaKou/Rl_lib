@@ -1,11 +1,11 @@
 import gym
 import numpy as np
 
-from common.Agent_set import Agent
-from common.algorithms import BaseAlgorithm, DQNAlgorithm
-from common.datacollection import Replay_buffer
-from common.updator import critic_updator_dqn, actor_updator_ddpg, soft_update
-from common.user.custom_actor_critic import MLPfeature_extractor, ddpg_critic, FlattenExtractor, dqn_critic
+from jueru.Agent_set import Agent
+from jueru.algorithms import BaseAlgorithm, DQNAlgorithm
+from jueru.datacollection import Replay_buffer
+from jueru.updator import critic_updator_dqn, actor_updator_ddpg, soft_update
+from jueru.user.custom_actor_critic import MLPfeature_extractor, ddpg_critic, FlattenExtractor, dqn_critic
 
 env = gym.make('CartPole-v0')
 

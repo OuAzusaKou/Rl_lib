@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from common.utils import get_obs_shape, get_action_dim
+from jueru.utils import get_obs_shape, get_action_dim
 
 
 class Replay_buffer:

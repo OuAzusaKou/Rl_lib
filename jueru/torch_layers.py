@@ -6,8 +6,8 @@ import torch as th
 
 from torch import nn
 
-from common.preprocessing import get_flattened_obs_dim
-from common.utils import get_device
+from jueru.preprocessing import get_flattened_obs_dim
+from jueru.utils import get_device
 
 
 class BaseFeaturesExtractor(nn.Module):

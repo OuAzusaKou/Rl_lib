@@ -9,7 +9,7 @@ import torch
 from matplotlib import pyplot as plt
 from tensorboardX import SummaryWriter
 
-from common.utils import get_linear_fn
+from jueru.utils import get_linear_fn
 
 
 class BaseAlgorithm:
@@ -184,8 +184,8 @@ class DQNAlgorithm(BaseAlgorithm):
                     for _ in range(self.update_step):
                         batch = self.data_collection.sample_batch(self.batch_size)  # random sample batch
                         self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
-                                           reward=batch['reward'], next_state=batch['next_state'],
-                                           done_value=batch['done'], gamma=self.gamma)
+                                                           reward=batch['reward'], next_state=batch['next_state'],
+                                                           done_value=batch['done'], gamma=self.gamma)
 
                 step += 1
 
@@ -198,12 +198,9 @@ class DQNAlgorithm(BaseAlgorithm):
 
 
 class SACAlgorithm(BaseAlgorithm):
-    def learn(self, num_train_step):
-        """interact"""
-        self.agent.functor_dict['actor'].train()
-        self.agent.functor_dict['critic'].train()
-        # self.agent.actor_target.train()
-        # self.agent.critic_target.train()
+    def learn(self, num_train_step, actor_update_freq):
+        self.actor_update_freq = actor_update_freq
+
         step = 0
 
         while step <= (num_train_step):
@@ -216,11 +213,12 @@ class SACAlgorithm(BaseAlgorithm):
                 if self.render:
                     self.env.render()
 
-                if step >= self.start_steps:
-                    action = self.agent.choose_action(state, self.action_noise)
-                else:
+                if step < self.start_steps:
                     action = self.env.action_space.sample()
-                # print(action)
+                else:
+                    with torch.no_grad():
+                        action = self.agent.sample_action(state)
+
                 next_state, reward, done, _ = self.env.step(action)
 
                 done_value = 0 if done else 1
@@ -233,27 +231,26 @@ class SACAlgorithm(BaseAlgorithm):
 
                 if step >= self.min_update_step and step % self.update_step == 0:
                     for _ in range(self.update_step):
-                        batch = self.data_collection.sample_batch(self.batch_size)  # random sample batch
-                        self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
-                                                           reward=batch['reward'], next_state=batch['next_state'],
-                                                           done_value=batch['done'], gamma=self.gamma)
+                        batch = self.data_collection.sample_batch(self.batch_size)
 
-                        self.updator_dict['actor_update'](self.agent, state=batch['state'], action=batch['action'],
-                                                          reward=batch['reward'], next_state=batch['next_state'],
-                                                          gamma=self.gamma)
+                        self.updator_dict['critic_update'](self.agent, obs=batch['state'], action=batch['action'],
+                                                           reward=batch['reward'], next_obs=batch['next_state'],
+                                                           not_done=batch['done'], gamma=self.gamma)
+                        self.updator_dict['actor_and_alpha_update'](self.agent, obs=batch['state'],
+                                                                    target_entropy=-self.agent.functor_dict[
+                                                                        'critic'].action_dim)
 
-                        self.updator_dict['soft_update'](self.agent.functor_dict['actor_target'],
-                                                         self.agent.functor_dict['actor'],
+                        self.updator_dict['soft_update'](self.agent.functor_dict['critic_target'].Q1,
+                                                         self.agent.functor_dict['critic'].Q1,
                                                          polyak=self.polyak)
-
-                        self.updator_dict['soft_update'](self.agent.functor_dict['critic_target'],
-                                                         self.agent.functor_dict['critic'],
+                        self.updator_dict['soft_update'](self.agent.functor_dict['critic_target'].Q2,
+                                                         self.agent.functor_dict['critic'].Q2,
                                                          polyak=self.polyak)
 
                 step += 1
 
                 if done:
-                    self.writer.add_scalar('episode_reward', episode_reward, global_step=step)
+                    self.writer.add_scalar('episode_reward_step', episode_reward, global_step=step)
 
                     break
 

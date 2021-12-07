@@ -1,6 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
-
+import torch.nn.functional as F
 
 def soft_update(target, source, polyak):
     with torch.no_grad():
@@ -158,3 +159,50 @@ def critic_updator_dqn(agent, state, action, reward, next_state, done_value, gam
     #           ' -->grad_value:', parms.grad)
 
     return
+
+
+def critic_updator_sac(agent, obs, action, reward, next_obs, not_done, gamma):
+    with torch.no_grad():
+        _, policy_action, log_pi, _ = agent.functor_dict['actor'](next_obs)
+        target_Q1, target_Q2 = agent.functor_dict['critic_target'](next_obs, policy_action)
+        target_V = torch.min(target_Q1,
+                             target_Q2) - agent.functor_dict['log_alpha'].exp().detach() * log_pi
+        target_Q = reward + (not_done * gamma * target_V)
+
+    # get current Q estimates
+    current_Q1, current_Q2 = agent.functor_dict['critic'](
+        obs, action)
+    critic_loss = F.mse_loss(current_Q1,
+                             target_Q) + F.mse_loss(current_Q2, target_Q)
+
+
+
+    # Optimize the critic
+    agent.optimizer_dict['critic'].zero_grad()
+    critic_loss.backward()
+    agent.optimizer_dict['critic'].step()
+
+def actor_and_alpha_updator_sac(agent, obs, target_entropy):
+    # detach encoder, so we don't update it with the actor loss
+    _, pi, log_pi, log_std = agent.functor_dict['actor'](obs)
+    actor_Q1, actor_Q2 = agent.functor_dict['critic'](obs, pi)
+
+    actor_Q = torch.min(actor_Q1, actor_Q2)
+    actor_loss = (agent.functor_dict['log_alpha'].exp().detach() * log_pi - actor_Q).mean()
+
+    entropy = 0.5 * log_std.shape[1] * \
+        (1.0 + np.log(2 * np.pi)) + log_std.sum(dim=-1)
+
+
+    # optimize the actor
+    agent.optimizer_dict['actor'].zero_grad()
+    actor_loss.backward()
+    agent.optimizer_dict['actor'].step()
+
+
+    agent.optimizer_dict['log_alpha'].zero_grad()
+    alpha_loss = (agent.functor_dict['log_alpha'].exp() *
+                  (-log_pi - target_entropy).detach()).mean()
+
+    alpha_loss.backward()
+    agent.optimizer_dict['log_alpha'].step()

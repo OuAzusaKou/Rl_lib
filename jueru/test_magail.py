@@ -1,10 +1,10 @@
 import os
 
-from common.Agent_set import Agent
-from common.algorithms import MAGAAlgorithms
-from common.datacollection import GAIL_DataSet
-from common.updator import actor_updator_gail, discriminator_updator
-from common.user.custom_actor_critic import MLPfeature_extractor, ddpg_actor, ddpg_critic, gail_discriminator
+from jueru.Agent_set import Agent
+from jueru.algorithms import MAGAAlgorithms
+from jueru.datacollection import GAIL_DataSet
+from jueru.updator import actor_updator_gail, discriminator_updator
+from jueru.user.custom_actor_critic import MLPfeature_extractor, ddpg_actor, ddpg_critic, gail_discriminator
 from ma_env.ma_elec_env import wrapped_env
 elec = 135.5
 env = wrapped_env(elec)

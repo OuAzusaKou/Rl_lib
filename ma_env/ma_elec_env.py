@@ -11,7 +11,7 @@ from pettingzoo.utils import random_demo
 def wrapped_env(elec):
     '''
     The env function wraps the environment in 3 wrappers by default. These
-    wrappers contain logic that is common to many pettingzoo environments.
+    wrappers contain logic that is jueru to many pettingzoo environments.
     We recommend you use at least the OrderEnforcingWrapper on your own environment
     to provide sane error messages. You can find full documentation for these methods
     elsewhere in the developer documentation.

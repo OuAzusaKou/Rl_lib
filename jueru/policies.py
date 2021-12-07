@@ -9,12 +9,12 @@ import torch as th
 from functools import partial
 
 
-from common.distributions import make_proba_distribution, DiagGaussianDistribution, CategoricalDistribution, \
+from jueru.distributions import make_proba_distribution, DiagGaussianDistribution, CategoricalDistribution, \
     MultiCategoricalDistribution, BernoulliDistribution, TupleDistribution
-from common.preprocessing import preprocess_obs, maybe_transpose
-from common.torch_layers import BaseFeaturesExtractor, FlattenExtractor, MlpExtractor
-from common.type_aliases import Schedule
-from common.utils import get_device, is_vectorized_observation
+from jueru.preprocessing import preprocess_obs, maybe_transpose
+from jueru.torch_layers import BaseFeaturesExtractor, FlattenExtractor, MlpExtractor
+from jueru.type_aliases import Schedule
+from jueru.utils import get_device, is_vectorized_observation
 import numpy as np
 
 

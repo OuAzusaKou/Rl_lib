@@ -11,7 +11,7 @@ from pygame import event
 from pygame.constants import K_0, K_1, K_2, K_3, K_4,K_5,K_6,K_7
 from PIL import Image
 
-from common.uav_env.Entities import Obstacle, Target, Agent
+from jueru.uav_env.Entities import Obstacle, Target, Agent
 
 
 class Uav_env(gym.Env):

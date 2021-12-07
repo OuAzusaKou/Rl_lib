@@ -1,12 +1,14 @@
 import os
 
+import torch
 import torch as th
 from typing import Iterable, Optional, Union, Tuple, Dict
 import numpy as np
 import gym
 from gym import spaces
+import torch.nn.functional as F
 
-from common.type_aliases import Schedule
+from jueru.type_aliases import Schedule
 
 
 def get_device(device: Union[th.device, str] = "auto") -> th.device:
@@ -237,3 +239,19 @@ def scan_root(root_):
         for file in files:
             file_list.append(os.path.join(root, file))
     return file_list, dir_list
+
+def gaussian_logprob(noise, log_std):
+    """Compute Gaussian log probability."""
+    residual = (-0.5 * noise.pow(2) - log_std).sum(-1, keepdim=True)
+    return residual - 0.5 * np.log(2 * np.pi) * noise.size(-1)
+
+def squash(mu, pi, log_pi):
+    """Apply squashing function.
+    See appendix C from https://arxiv.org/pdf/1812.05905.pdf.
+    """
+    mu = torch.tanh(mu)
+    if pi is not None:
+        pi = torch.tanh(pi)
+    if log_pi is not None:
+        log_pi -= torch.log(F.relu(1 - pi.pow(2)) + 1e-6).sum(-1, keepdim=True)
+    return mu, pi, log_pi

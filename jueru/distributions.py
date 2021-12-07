@@ -9,7 +9,7 @@ from gym import spaces
 from torch import nn
 from torch.distributions import Bernoulli, Categorical, Normal
 
-from common.preprocessing import get_action_dim
+from jueru.preprocessing import get_action_dim
 
 
 class Distribution(ABC):

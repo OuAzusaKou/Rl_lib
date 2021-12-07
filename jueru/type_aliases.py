@@ -1,7 +1,7 @@
 from typing import Any, Callable, Dict, List, NamedTuple, Tuple, Union
 import gym
 
-from common import callbacks
+from jueru import callbacks
 
 GymEnv = Union[gym.Env]
 Schedule = Callable[[float], float]
