@@ -51,7 +51,7 @@ dqn.learn(num_train_step=5000)
 agent = DQN_agent.load('Base_model_address')
 
 obs = env.reset()
-for i in range(1000):
+for i in range(1001):
     action = agent.predict(obs)
     obs, reward, done, info = env.step(action)
     env.render()
