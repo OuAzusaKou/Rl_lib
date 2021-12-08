@@ -46,7 +46,7 @@ dqn = DQNAlgorithm(agent_class=DQN_agent,
                    polyak=0.995,
                    )
 
-dqn.learn(num_train_step=5)
+dqn.learn(num_train_step=5000)
 
 agent = DQN_agent.load('Base_model_address')
 
