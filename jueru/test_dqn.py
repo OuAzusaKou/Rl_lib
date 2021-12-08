@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 
-from jueru.Agent_set import Agent
+from jueru.Agent_set import DQN_agent
 from jueru.algorithms import BaseAlgorithm, DQNAlgorithm
 from jueru.datacollection import Replay_buffer
 from jueru.updator import critic_updator_dqn, actor_updator_ddpg, soft_update
@@ -14,8 +14,6 @@ feature_extractor = FlattenExtractor(env.observation_space)
 # actor = dqn_actor(env.action_space, feature_extractor, 3)
 
 critic = dqn_critic(env.action_space, feature_extractor, np.prod(env.observation_space.shape))
-
-DQN_Agent = Agent
 
 data_collection = Replay_buffer
 
@@ -31,7 +29,7 @@ lr_dict['critic'] = 1e-3
 
 updator_dict['critic_update'] = critic_updator_dqn
 
-dqn = DQNAlgorithm(agent_class=DQN_Agent,
+dqn = DQNAlgorithm(agent_class=DQN_agent,
                    functor_dict=functor_dict,
                    lr_dict=lr_dict,
                    updator_dict=updator_dict,
@@ -46,7 +44,18 @@ dqn = DQNAlgorithm(agent_class=DQN_Agent,
                    min_update_step=1000,
                    update_step=100,
                    polyak=0.995,
-
                    )
 
-dqn.learn(num_train_step=1000000)
+dqn.learn(num_train_step=5)
+
+agent = DQN_agent.load('Base_model_address')
+
+obs = env.reset()
+for i in range(1000):
+    action = agent.predict(obs)
+    obs, reward, done, info = env.step(action)
+    env.render()
+    if done:
+      obs = env.reset()
+
+env.close()

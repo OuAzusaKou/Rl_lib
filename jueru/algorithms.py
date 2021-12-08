@@ -37,9 +37,14 @@ class BaseAlgorithm:
             min_update_step: int = 1000,
             update_step: int = 100,
             start_steps: int = 10000,
+            model_address: str = "./Base_model_address",
+            save_interval: int = 5000,
     ):
         self.env = env
         os.makedirs(tensorboard_log, exist_ok=True)
+        os.makedirs(model_address, exist_ok=True)
+        self.model_address = model_address
+        self.save_interval = save_interval
         self.writer = SummaryWriter(tensorboard_log)
         self.exploration_rate = exploration_rate
         self.exploration_start = exploration_start
@@ -134,7 +139,8 @@ class BaseAlgorithm:
                                                          polyak=self.polyak)
 
                 step += 1
-
+                if step >= self.min_update_step and step % self.save_interval == 0:
+                    self.agent.save(address=self.model_address)
                 if done:
                     self.writer.add_scalar('episode_reward', episode_reward, global_step=step)
 
@@ -190,7 +196,8 @@ class DQNAlgorithm(BaseAlgorithm):
                 step += 1
 
                 self.exploration_rate = self.exploration_func((1 - step / num_train_step))
-
+                if step >= self.min_update_step and step % self.save_interval == 0:
+                    self.agent.save(address=self.model_address)
                 if done:
                     self.writer.add_scalar('episode_reward_step', episode_reward, global_step=step)
                     self.writer.add_scalar('exploration_rate_step', self.exploration_rate, global_step=step)
@@ -248,7 +255,8 @@ class SACAlgorithm(BaseAlgorithm):
                                                          polyak=self.polyak)
 
                 step += 1
-
+                if step >= self.min_update_step and step % self.save_interval == 0:
+                    self.agent.save(address=self.model_address)
                 if done:
                     self.writer.add_scalar('episode_reward_step', episode_reward, global_step=step)
 

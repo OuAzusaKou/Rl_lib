@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 
-from jueru.Agent_set import Agent
+from jueru.Agent_set import DDPG_agent
 from jueru.algorithms import BaseAlgorithm
 from jueru.datacollection import Replay_buffer
 from jueru.updator import critic_updator_ddpg, actor_updator_ddpg, soft_update
@@ -18,7 +18,6 @@ actor = ddpg_actor(env.action_space, feature_extractor, np.prod(env.observation_
 
 critic = ddpg_critic(env.action_space, feature_extractor, np.prod(env.observation_space.shape))
 
-DDPG_agent = Agent
 
 data_collection = Replay_buffer
 

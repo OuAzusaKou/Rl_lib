@@ -2,7 +2,7 @@ import argparse
 
 import gym
 
-from jueru.Agent_set import Agent
+from jueru.Agent_set import DDPG_agent
 from jueru.algorithms import BaseAlgorithm
 from jueru.datacollection import Replay_buffer
 from jueru.updator import critic_updator_ddpg, actor_updator_ddpg, soft_update
@@ -38,8 +38,6 @@ if __name__ == "__main__":
     actor = ddpg_actor(env.action_space, feature_extractor, 3)
 
     critic = ddpg_critic(env.action_space, feature_extractor, 3)
-
-    DDPG_agent = Agent
 
     data_collection = Replay_buffer
 

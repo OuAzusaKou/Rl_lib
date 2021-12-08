@@ -51,32 +51,9 @@ DQN, DDPG, SAC, GAIL, MADDPG, MAGAIL.
 
 Please take a look at the [Roadmap](https://github.com/DLR-RM/stable-baselines3/issues/1) and [Milestones](https://github.com/DLR-RM/stable-baselines3/milestones).
 
-## Migration guide: from Stable-Baselines (SB2) to Stable-Baselines3 (SB3)
-
-A migration guide from SB2 to SB3 can be found in the [documentation](https://stable-baselines3.readthedocs.io/en/master/guide/migration.html).
 
 ## Documentation
 
-Documentation is available online: [https://stable-baselines3.readthedocs.io/](https://stable-baselines3.readthedocs.io/)
-
-## RL Baselines3 Zoo: A Training Framework for Stable Baselines3 Reinforcement Learning Agents
-
-[RL Baselines3 Zoo](https://github.com/DLR-RM/rl-baselines3-zoo) is a training framework for Reinforcement Learning (RL).
-
-It provides scripts for training, evaluating agents, tuning hyperparameters, plotting results and recording videos.
-
-In addition, it includes a collection of tuned hyperparameters for common environments and RL algorithms, and agents trained with those settings.
-
-Goals of this repository:
-
-1. Provide a simple interface to train and enjoy RL agents
-2. Benchmark the different Reinforcement Learning algorithms
-3. Provide tuned hyperparameters for each environment and RL algorithm
-4. Have fun with the trained agents!
-
-Github repo: https://github.com/DLR-RM/rl-baselines3-zoo
-
-Documentation: https://stable-baselines3.readthedocs.io/en/master/guide/rl_zoo.html
 
 ## SB3-Contrib: Experimental RL Features
 
@@ -89,18 +66,13 @@ Documentation is available online: [https://sb3-contrib.readthedocs.io/](https:/
 
 ## Installation
 
-**Note:** Stable-Baselines3 supports PyTorch >= 1.8.1.
+**Note:** Jueru supports PyTorch >= 1.7.1.
 
 ### Prerequisites
-Stable Baselines3 requires python 3.7+.
-
-#### Windows 10
-
-To install stable-baselines on Windows, please look at the [documentation](https://stable-baselines3.readthedocs.io/en/master/guide/install.html#prerequisites).
-
+Jueru requires python 3.7+.
 
 ### Install using pip
-Install the Stable Baselines3 package:
+Install the Jueru package:
 ```
 pip install stable-baselines3[extra]
 ```
@@ -111,32 +83,63 @@ This includes an optional dependencies like Tensorboard, OpenCV or `atari-py` to
 pip install stable-baselines3
 ```
 
-Please read the [documentation](https://stable-baselines3.readthedocs.io/) for more details and alternatives (from source, using docker).
-
 
 ## Example
 
 Most of the library tries to follow a sklearn-like syntax for the Reinforcement Learning algorithms.
 
-Here is a quick example of how to train and run PPO on a cartpole environment:
+Here is a quick example of how to train and run DQN on a cartpole environment:
 ```python
 import gym
+import numpy as np
 
-from stable_baselines3 import PPO
+from jueru.Agent_set import Agent
+from jueru.algorithms import  DQNAlgorithm
+from jueru.datacollection import Replay_buffer
+from jueru.updator import critic_updator_dqn
+from jueru.user.custom_actor_critic import FlattenExtractor, dqn_critic
 
-env = gym.make("CartPole-v1")
+env = gym.make('CartPole-v0')
 
-model = PPO("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=10000)
+feature_extractor = FlattenExtractor(env.observation_space)
 
-obs = env.reset()
-for i in range(1000):
-    action, _states = model.predict(obs, deterministic=True)
-    obs, reward, done, info = env.step(action)
-    env.render()
-    if done:
-      obs = env.reset()
+critic = dqn_critic(env.action_space, feature_extractor, np.prod(env.observation_space.shape))
 
+DQN_Agent = Agent
+
+data_collection = Replay_buffer
+
+functor_dict = {}
+
+lr_dict = {}
+
+updator_dict = {}
+
+functor_dict['critic'] = critic
+
+lr_dict['critic'] = 1e-3
+
+updator_dict['critic_update'] = critic_updator_dqn
+
+dqn = DQNAlgorithm(agent_class=DQN_Agent,
+                   functor_dict=functor_dict,
+                   lr_dict=lr_dict,
+                   updator_dict=updator_dict,
+                   data_collection=data_collection,
+                   env=env,
+                   buffer_size=1e6,
+                   gamma=0.99,
+                   batch_size=100,
+                   tensorboard_log="./DQN_tensorboard",
+                   render=True,
+                   action_noise=0.1,
+                   min_update_step=1000,
+                   update_step=100,
+                   polyak=0.995,
+
+                   )
+
+dqn.learn(num_train_step=1000000)
 env.close()
 ```
 
