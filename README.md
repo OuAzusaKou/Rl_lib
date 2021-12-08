@@ -35,6 +35,7 @@ DQN, DDPG, SAC, GAIL, MADDPG, MAGAIL.
 | Custom Learning | :heavy_check_mark: |:x:|
 | Custom Functor | :heavy_check_mark: |:x:|
 | Custom Updator | :heavy_check_mark: |:x:|
+| Multi-Agent       | :heavy_check_mark: |:x:|
 | Documentation               | :heavy_check_mark: |:heavy_check_mark:|
 | Custom environments         | :heavy_check_mark: |:heavy_check_mark:|
 | Custom policies             | :heavy_check_mark: |:heavy_check_mark:|
