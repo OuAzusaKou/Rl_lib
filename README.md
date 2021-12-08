@@ -55,15 +55,6 @@ Please take a look at the [Roadmap](https://github.com/DLR-RM/stable-baselines3/
 ## Documentation
 
 
-## SB3-Contrib: Experimental RL Features
-
-We implement experimental features in a separate contrib repository: [SB3-Contrib](https://github.com/Stable-Baselines-Team/stable-baselines3-contrib)
-
-This allows SB3 to maintain a stable and compact core, while still providing the latest features, like Truncated Quantile Critics (TQC), Quantile Regression DQN (QR-DQN) or PPO with invalid action masking (Maskable PPO).
-
-Documentation is available online: [https://sb3-contrib.readthedocs.io/](https://sb3-contrib.readthedocs.io/)
-
-
 ## Installation
 
 **Note:** Jueru supports PyTorch >= 1.7.1.
