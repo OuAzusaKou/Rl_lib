@@ -93,19 +93,19 @@ Here is a quick example of how to train and run DQN on a cartpole environment:
 import gym
 import numpy as np
 
-from jueru.Agent_set import Agent
-from jueru.algorithms import  DQNAlgorithm
+from jueru.Agent_set import DQN_agent
+from jueru.algorithms import BaseAlgorithm, DQNAlgorithm
 from jueru.datacollection import Replay_buffer
-from jueru.updator import critic_updator_dqn
-from jueru.user.custom_actor_critic import FlattenExtractor, dqn_critic
+from jueru.updator import critic_updator_dqn, actor_updator_ddpg, soft_update
+from jueru.user.custom_actor_critic import MLPfeature_extractor, ddpg_critic, FlattenExtractor, dqn_critic
 
 env = gym.make('CartPole-v0')
 
 feature_extractor = FlattenExtractor(env.observation_space)
 
-critic = dqn_critic(env.action_space, feature_extractor, np.prod(env.observation_space.shape))
+# actor = dqn_actor(env.action_space, feature_extractor, 3)
 
-DQN_Agent = Agent
+critic = dqn_critic(env.action_space, feature_extractor, np.prod(env.observation_space.shape))
 
 data_collection = Replay_buffer
 
@@ -121,7 +121,7 @@ lr_dict['critic'] = 1e-3
 
 updator_dict['critic_update'] = critic_updator_dqn
 
-dqn = DQNAlgorithm(agent_class=DQN_Agent,
+dqn = DQNAlgorithm(agent_class=DQN_agent,
                    functor_dict=functor_dict,
                    lr_dict=lr_dict,
                    updator_dict=updator_dict,
@@ -136,108 +136,61 @@ dqn = DQNAlgorithm(agent_class=DQN_Agent,
                    min_update_step=1000,
                    update_step=100,
                    polyak=0.995,
-
                    )
 
-dqn.learn(num_train_step=1000000)
+dqn.learn(num_train_step=5)
+
+agent = DQN_agent.load('Base_model_address')
+
+obs = env.reset()
+for i in range(1000):
+    action = agent.predict(obs)
+    obs, reward, done, info = env.step(action)
+    env.render()
+    if done:
+      obs = env.reset()
+
 env.close()
 ```
-
-Or just train a model with a one liner if [the environment is registered in Gym](https://github.com/openai/gym/wiki/Environments) and if [the policy is registered](https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html):
-
-```python
-from stable_baselines3 import PPO
-
-model = PPO('MlpPolicy', 'CartPole-v1').learn(10000)
-```
-
-Please read the [documentation](https://stable-baselines3.readthedocs.io/) for more examples.
-
-
-## Try it online with Colab Notebooks !
-
-All the following examples can be executed online using Google colab notebooks:
-
-- [Full Tutorial](https://github.com/araffin/rl-tutorial-jnrr19)
-- [All Notebooks](https://github.com/Stable-Baselines-Team/rl-colab-notebooks/tree/sb3)
-- [Getting Started](https://colab.research.google.com/github/Stable-Baselines-Team/rl-colab-notebooks/blob/sb3/stable_baselines_getting_started.ipynb)
-- [Training, Saving, Loading](https://colab.research.google.com/github/Stable-Baselines-Team/rl-colab-notebooks/blob/sb3/saving_loading_dqn.ipynb)
-- [Multiprocessing](https://colab.research.google.com/github/Stable-Baselines-Team/rl-colab-notebooks/blob/sb3/multiprocessing_rl.ipynb)
-- [Monitor Training and Plotting](https://colab.research.google.com/github/Stable-Baselines-Team/rl-colab-notebooks/blob/sb3/monitor_training.ipynb)
-- [Atari Games](https://colab.research.google.com/github/Stable-Baselines-Team/rl-colab-notebooks/blob/sb3/atari_games.ipynb)
-- [RL Baselines Zoo](https://colab.research.google.com/github/Stable-Baselines-Team/rl-colab-notebooks/blob/sb3/rl-baselines-zoo.ipynb)
-- [PyBullet](https://colab.research.google.com/github/Stable-Baselines-Team/rl-colab-notebooks/blob/sb3/pybullet.ipynb)
 
 
 ## Implemented Algorithms
 
-| **Name**         | **Recurrent**      | `Box`          | `Discrete`     | `MultiDiscrete` | `MultiBinary`  | **Multi Processing**              |
-| ------------------- | ------------------ | ------------------ | ------------------ | ------------------- | ------------------ | --------------------------------- |
-| A2C   | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| DDPG  | :x: | :heavy_check_mark: | :x:                | :x:                 | :x:                | :heavy_check_mark: |
-| DQN   | :x: | :x: | :heavy_check_mark: | :x:                 | :x:                | :heavy_check_mark: |
-| HER   | :x: | :heavy_check_mark: | :heavy_check_mark: | :x:                 | :x:                | :x: |
-| PPO   | :x: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark: |
-| SAC   | :x: | :heavy_check_mark: | :x:                | :x:                 | :x:                | :heavy_check_mark: |
-| TD3   | :x: | :heavy_check_mark: | :x:                | :x:                 | :x:                | :heavy_check_mark: |
-| QR-DQN<sup>[1](#f1)</sup>  | :x: | :x: | :heavy_check_mark: | :x:                 | :x:                | :heavy_check_mark: |
-| TQC<sup>[1](#f1)</sup>   | :x: | :heavy_check_mark: | :x:                | :x:                 | :x: | :heavy_check_mark: |
-| Maskable PPO<sup>[1](#f1)</sup>   | :x: | :x: | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark:  |
+| **Name**         | **Recurrent**      | `Box`          | `Discrete`     |
+| ------------------- | ------------------ | ------------------ | ------------------ |
+| DDPG  | :x: | :heavy_check_mark: | :x:                |
+| DQN   | :x: | :x: | :heavy_check_mark: |
+| SAC   | :x: | :heavy_check_mark: | :x:                |
+| MADDPG   | :x: | :heavy_check_mark: | :x:                |
+| GAIL   | :x: | :heavy_check_mark: | :x:                |
+| MAGAIL   | :x: | :heavy_check_mark: | :x:                |
 
-<b id="f1">1</b>: Implemented in [SB3 Contrib](https://github.com/Stable-Baselines-Team/stable-baselines3-contrib) GitHub repository.
+<b id="f1">1</b>: Implemented in Jueru GitHub repository.
 
 Actions `gym.spaces`:
  * `Box`: A N-dimensional box that containes every point in the action space.
  * `Discrete`: A list of possible actions, where each timestep only one of the actions can be used.
- * `MultiDiscrete`: A list of possible actions, where each timestep only one action of each discrete set can be used.
- * `MultiBinary`: A list of possible actions, where each timestep any of the actions can be used in any combination.
 
 
 
 ## Testing the installation
-All unit tests in stable baselines3 can be run using `pytest` runner:
+All unit tests in Jueru can be run using `pytest` runner:
 ```
 pip install pytest pytest-cov
 make pytest
 ```
 
-You can also do a static type check using `pytype`:
-```
-pip install pytype
-make type
-```
 
-Codestyle check with `flake8`:
-```
-pip install flake8
-make lint
-```
+## Projects Using Jueru
 
-## Projects Using Stable-Baselines3
-
-We try to maintain a list of project using stable-baselines3 in the [documentation](https://stable-baselines3.readthedocs.io/en/master/misc/projects.html),
+We try to maintain a list of project using Jueru in the documentation,
 please tell us when if you want your project to appear on this page ;)
 
-## Citing the Project
 
-To cite this repository in publications:
-
-```bibtex
-@article{stable-baselines3,
-  author  = {Antonin Raffin and Ashley Hill and Adam Gleave and Anssi Kanervisto and Maximilian Ernestus and Noah Dormann},
-  title   = {Stable-Baselines3: Reliable Reinforcement Learning Implementations},
-  journal = {Journal of Machine Learning Research},
-  year    = {2021},
-  volume  = {22},
-  number  = {268},
-  pages   = {1-8},
-  url     = {http://jmlr.org/papers/v22/20-1364.html}
-}
-```
 
 ## Maintainers
 
-Stable-Baselines3 is currently maintained by [Ashley Hill](https://github.com/hill-a) (aka @hill-a), [Antonin Raffin](https://araffin.github.io/) (aka [@araffin](https://github.com/araffin)), [Maximilian Ernestus](https://github.com/ernestum) (aka @ernestum), [Adam Gleave](https://github.com/adamgleave) (@AdamGleave) and [Anssi Kanervisto](https://github.com/Miffyli) (@Miffyli).
+Jueru is currently maintained by Zihang Wang, Jiayuan Li, Dunqi Yao.
 
 **Important Note: We do not do technical support, nor consulting** and don't answer personal questions per email.
 Please post your question on the [RL Discord](https://discord.com/invite/xhfNqQv), [Reddit](https://www.reddit.com/r/reinforcementlearning/) or [Stack Overflow](https://stackoverflow.com/) in that case.
@@ -245,14 +198,5 @@ Please post your question on the [RL Discord](https://discord.com/invite/xhfNqQv
 
 ## How To Contribute
 
-To any interested in making the baselines better, there is still some documentation that needs to be done.
-If you want to contribute, please read [**CONTRIBUTING.md**](./CONTRIBUTING.md) guide first.
+To any interested in making the Jueru better, there is still some documentation that needs to be done.
 
-## Acknowledgments
-
-The initial work to develop Stable Baselines3 was partially funded by the project *Reduced Complexity Models* from the *Helmholtz-Gemeinschaft Deutscher Forschungszentren*.
-
-The original version, Stable Baselines, was created in the [robotics lab U2IS](http://u2is.ensta-paristech.fr/index.php?lang=en) ([INRIA Flowers](https://flowers.inria.fr/) team) at [ENSTA ParisTech](http://www.ensta-paristech.fr/en).
-
-
-Logo credits: [L.M. Tenkes](https://www.instagram.com/lucillehue/)
