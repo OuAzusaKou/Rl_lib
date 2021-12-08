@@ -49,7 +49,6 @@ DQN, DDPG, SAC, GAIL, MADDPG, MAGAIL.
 
 ### Planned features
 
-Please take a look at the [Roadmap](https://github.com/DLR-RM/stable-baselines3/issues/1) and [Milestones](https://github.com/DLR-RM/stable-baselines3/milestones).
 
 
 ## Documentation
