@@ -65,14 +65,10 @@ Jueru requires python 3.7+.
 ### Install using pip
 Install the Jueru package:
 ```
-pip install stable-baselines3[extra]
+pip install jueru
 ```
 **Note:** Some shells such as Zsh require quotation marks around brackets, i.e. `pip install 'stable-baselines3[extra]'` ([More Info](https://stackoverflow.com/a/30539963)).
 
-This includes an optional dependencies like Tensorboard, OpenCV or `atari-py` to train on atari games. If you do not need those, you can use:
-```
-pip install stable-baselines3
-```
 
 
 ## Example
