@@ -59,8 +59,8 @@ class Uav_env(gym.Env):
         self.action_list = [[1, 1], [-1, -1], [0, 0], [-1, 1], [1, -1]]
         self.observation_space = spaces.Dict({'image': spaces.Box(low=0, high=255,
                                                                   shape=(1, 22, 22), dtype=np.uint8),
-                                              'target': spaces.Box(low=5, high=self.world_size,
-                                                                   shape=(2,), dtype=np.float32)
+                                              'target': spaces.Box(low=0, high=self.world_size,
+                                                                   shape=(4,), dtype=np.float32)
                                               })
 
         self.pygame_init()
@@ -192,9 +192,16 @@ class Uav_env(gym.Env):
     def _get_obs(self):
 
         im = self.Capture(display=self.screen, name='1', pos=self.agent_pos[:2], size=[self.obs_size, self.obs_size])
-        #print(np.array(self.target_pos[0]).shape)
+
+        # float_target = []
+        # for i in self.target_pos[0]:
+        #     float_target.append(float(i))
+        target_array = np.array(self.target_pos[0])
+        agent_pos_array = np.array(self.agent_pos)
+        #print(target_array)
+        #print(agent_pos_array)
         observation_dict = {'image': im,
-                            'target': np.float32(np.array(self.target_pos[0]))}
+                            'target': np.float32(np.concatenate([target_array, agent_pos_array]))}
         # print(im.shape)
         return observation_dict
 
@@ -306,6 +313,7 @@ class Uav_env(gym.Env):
                                                            (self.world_size - 1))
             self.target_list.sprites()[0].rect.y = np.clip(self.target_list.sprites()[0].rect.y, 0,
                                                            (self.world_size - 1))
+        self.target_pos[0] = [self.target_list.sprites()[0].rect.x, self.target_list.sprites()[0].rect.y]
         return
 
 

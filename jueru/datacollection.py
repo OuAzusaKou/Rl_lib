@@ -92,10 +92,10 @@ class Dict_Replay_buffer:
             next_state[key] = torch.as_tensor(obs[idxs], dtype=torch.float32)
         batch = dict(state=state,
                      next_state=next_state,
-                     action=self.action_buf[idxs],
-                     reward=self.reward_buf[idxs],
-                     done=self.done_buf[idxs])
-        return {k: torch.as_tensor(v, dtype=torch.float32) for k,v in batch.items()}
+                     action=torch.as_tensor(self.action_buf[idxs], dtype=torch.float32),
+                     reward=torch.as_tensor(self.reward_buf[idxs], dtype=torch.float32),
+                     done=torch.as_tensor(self.done_buf[idxs], dtype=torch.float32))
+        return batch
 
     def __len__(self):
         return len(self.state_buf)

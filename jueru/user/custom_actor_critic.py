@@ -47,8 +47,9 @@ def create_mlp(
     return modules
 
 
-class CombinedExtractor:
+class CombinedExtractor(nn.Module):
     def __init__(self, observation_space: gym.spaces.Dict, feature_dim = 128):
+        super(CombinedExtractor, self).__init__()
         # We do not know features-dim here before going over all the items,
         # so put something dummy for now. PyTorch requires calling
         # nn.Module.__init__ before adding modules
