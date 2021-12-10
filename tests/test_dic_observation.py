@@ -8,7 +8,7 @@ from gym import spaces, GoalEnv
 
 from jueru.Agent_set import DDPG_agent
 from jueru.algorithms import BaseAlgorithm, DQNAlgorithm, SACAlgorithm
-from jueru.datacollection import Replay_buffer
+from jueru.datacollection import Dict_Replay_buffer
 from jueru.envs.uav_env.uav_env import Uav_env
 from jueru.updator import actor_updator_ddpg, critic_updator_ddpg, soft_update
 from jueru.user.custom_actor_critic import CombinedExtractor, ddpg_actor, ddpg_critic
@@ -29,7 +29,7 @@ def test_dict_observation(algorithm_class):
 
         critic = ddpg_critic(env.action_space, feature_extractor, feature_dim+16)
 
-        data_collection = Replay_buffer
+        data_collection = Dict_Replay_buffer
 
         functor_dict = {}
 

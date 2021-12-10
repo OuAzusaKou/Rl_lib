@@ -2,7 +2,7 @@ from collections import namedtuple
 from random import random
 
 import numpy as np
-
+#import stable_baselines3
 #Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state'))
 #import spinup
 import torch
@@ -17,19 +17,9 @@ class Replay_buffer:
     def __init__(self, env, size):
         self.obs_shape = get_obs_shape(env.observation_space)
         self.action_dim = get_action_dim(env.action_space)
-        if isinstance(env.observation_space, spaces.Dict):
-            self.state_buf = {
-                key: np.zeros((int(size), *_obs_shape)) for key, _obs_shape in
-                self.obs_shape.items()
-            }
-            self.next_state_buf = {
-                key: np.zeros((int(size), *_obs_shape)) for key, _obs_shape in
-                self.obs_shape.items()
-            }
 
-        else:
-            self.state_buf = np.zeros((int(size), *self.obs_shape), dtype=env.observation_space.dtype)
-            self.next_state_buf = np.zeros((int(size), *self.obs_shape), dtype=env.observation_space.dtype)
+        self.state_buf = np.zeros((int(size), *self.obs_shape), dtype=env.observation_space.dtype)
+        self.next_state_buf = np.zeros((int(size), *self.obs_shape), dtype=env.observation_space.dtype)
 
         self.action_buf = np.zeros((int(size), self.action_dim), dtype=env.action_space.dtype)
         self.reward_buf = np.zeros((int(size), 1), dtype=np.float32)
@@ -57,6 +47,58 @@ class Replay_buffer:
     def __len__(self):
         return len(self.state_buf)
 
+
+class Dict_Replay_buffer:
+    '''single agent dict_replay_buffer'''
+    def __init__(self, env, size):
+        self.obs_shape = get_obs_shape(env.observation_space)
+        self.action_dim = get_action_dim(env.action_space)
+
+        assert isinstance(self.obs_shape, dict), "DictReplayBuffer must be used with Dict obs space only"
+
+        self.state_buf = {
+            key: np.zeros((int(size), *_obs_shape)) for key, _obs_shape in
+            self.obs_shape.items()
+        }
+        self.next_state_buf = {
+            key: np.zeros((int(size), *_obs_shape)) for key, _obs_shape in
+            self.obs_shape.items()
+        }
+
+        self.action_buf = np.zeros((int(size), self.action_dim), dtype=env.action_space.dtype)
+        self.reward_buf = np.zeros((int(size), 1), dtype=np.float32)
+        self.done_buf = np.zeros((int(size), 1), dtype=np.float32)
+        self.ptr, self.size, self.max_size = 0, 0, size
+
+    def store(self, obs, act, rew, next_obs, done):
+        for key in self.state_buf.keys():
+            self.state_buf[key][int(self.ptr)] = obs[key].copy()
+        for key in self.next_state_buf.keys():
+            self.next_state_buf[key][int(self.ptr)] = next_obs[key].copy()
+
+        self.action_buf[int(self.ptr)] = act
+        self.reward_buf[int(self.ptr)] = rew
+        self.done_buf[int(self.ptr)] = done
+        self.ptr = (self.ptr+1) % self.max_size
+        self.size = min(self.size+1, self.max_size)
+
+    def sample_batch(self, batch_size=32):
+        idxs = np.random.randint(0, self.size, size=batch_size)
+        state = {}
+        next_state = {}
+        for key, obs in self.state_buf.items():
+            state[key] = torch.as_tensor(obs[idxs], dtype=torch.float32)
+        for key, obs in self.next_state_buf.items():
+            next_state[key] = torch.as_tensor(obs[idxs], dtype=torch.float32)
+        batch = dict(state=state,
+                     next_state=next_state,
+                     action=self.action_buf[idxs],
+                     reward=self.reward_buf[idxs],
+                     done=self.done_buf[idxs])
+        return {k: torch.as_tensor(v, dtype=torch.float32) for k,v in batch.items()}
+
+    def __len__(self):
+        return len(self.state_buf)
 
 class SignleReplay_buffer:
     '''repaly_buffer for multi-agent algorithms '''
