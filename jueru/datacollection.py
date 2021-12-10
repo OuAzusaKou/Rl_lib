@@ -11,14 +11,22 @@ from torch.utils.data import Dataset
 from jueru.utils import get_obs_shape, get_action_dim
 from gym import spaces
 
+
 class Replay_buffer:
     '''single agent replay_buffer'''
     def __init__(self, env, size):
         self.obs_shape = get_obs_shape(env.observation_space)
         self.action_dim = get_action_dim(env.action_space)
         if isinstance(env.observation_space, spaces.Dict):
-            self.state_buf = np.zeros((int(size), *self.obs_shape), dtype=env.observation_space.dtype)
-            self.next_state_buf = np.zeros((int(size), *self.obs_shape), dtype=env.observation_space.dtype)
+            self.state_buf = {
+                key: np.zeros((int(size), *_obs_shape)) for key, _obs_shape in
+                self.obs_shape.items()
+            }
+            self.next_state_buf = {
+                key: np.zeros((int(size), *_obs_shape)) for key, _obs_shape in
+                self.obs_shape.items()
+            }
+
         else:
             self.state_buf = np.zeros((int(size), *self.obs_shape), dtype=env.observation_space.dtype)
             self.next_state_buf = np.zeros((int(size), *self.obs_shape), dtype=env.observation_space.dtype)
