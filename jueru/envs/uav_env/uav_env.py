@@ -142,7 +142,7 @@ class Uav_env(gym.Env):
             if pygame.sprite.collide_mask(agent, self.target_list.sprites()[i]):
                 self.target_list.remove(self.target_list.sprites()[i])
                 self.trash_num = self.trash_num - 1
-                reward += 1
+                reward += 10
                 break
         for j in range(self.obstacle_num):
             if pygame.sprite.collide_mask(agent, self.obstacle_list.sprites()[j]):
@@ -163,7 +163,14 @@ class Uav_env(gym.Env):
             pygame.display.update()  # Update all display
 
             time.sleep(0.1)
-
+        agent_pos_array = np.array(self.agent_pos)
+        target_array = np.array(self.target_pos[0])
+        #print('a', agent_pos_array)
+        #print('t', target_array)
+        dis = np.dot((agent_pos_array - target_array).T, (agent_pos_array - target_array))
+        #print(dis)
+        reward -= dis*1e-4
+        #print(reward)
         return reward
 
     def close(self):
@@ -181,7 +188,7 @@ class Uav_env(gym.Env):
 
         img_array = pygame.surfarray.array3d(image).transpose(1, 0, 2)
         save_im = Image.fromarray(np.uint8(img_array)).convert('L')
-        save_im.save('obs.png')
+        #save_im.save('obs.png')
         im = Image.fromarray(np.uint8(img_array)).convert('L').resize((22, 22))
         im_array = np.array(im).reshape((22, 22, 1)).transpose(2, 0, 1)
         # print(im_array.shape)
