@@ -47,6 +47,43 @@ def create_mlp(
     return modules
 
 
+class CombinedExtractor:
+    def __init__(self, observation_space: gym.spaces.Dict, feature_dim = 128):
+        # We do not know features-dim here before going over all the items,
+        # so put something dummy for now. PyTorch requires calling
+        # nn.Module.__init__ before adding modules
+
+        extractors = {}
+
+        total_concat_size = 0
+        # We need to know size of the output of this extractor,
+        # so go over all the spaces and compute output feature sizes
+        for key, subspace in observation_space.spaces.items():
+            if key == "image":
+                # We will just downsample one channel of the image by 4x4 and flatten.
+                # Assume the image is single-channel (subspace.shape[0] == 0)
+                extractors[key] = CNNfeature_extractor(observation_space=subspace, features_dim=feature_dim)
+                total_concat_size += feature_dim
+            elif key == "target":
+                # Run through a simple MLP
+                extractors[key] = nn.Linear(subspace.shape[0], 16)
+                total_concat_size += 16
+
+        self.extractors = nn.ModuleDict(extractors)
+
+        # Update the features dim manually
+        self._features_dim = total_concat_size
+
+    def forward(self, observations) -> torch.Tensor:
+        encoded_tensor_list = []
+
+        # self.extractors contain nn.Modules that do all the processing.
+        for key, extractor in self.extractors.items():
+            encoded_tensor_list.append(extractor(observations[key]))
+        # Return a (B, self._features_dim) PyTorch tensor, where B is batch dimension.
+        return torch.cat(encoded_tensor_list, dim=1)
+
+
 class FlattenExtractor(nn.Module):
     """
     Feature extract that flatten the input.
@@ -177,7 +214,6 @@ class dqn_critic(nn.Module):
             self.feature_extractor(observations))
 
 
-
 class Sac_actor(nn.Module):
     """MLP actor network."""
 
@@ -233,8 +269,10 @@ class Sac_actor(nn.Module):
 
         return mu, pi, log_pi, log_std
 
+
 class QFunction(nn.Module):
     """MLP for q-function."""
+
     def __init__(self, obs_dim, action_dim, hidden_dim):
         super().__init__()
 
@@ -250,14 +288,15 @@ class QFunction(nn.Module):
         obs_action = torch.cat([obs, action], dim=1)
         return self.trunk(obs_action)
 
+
 class Sac_critic(nn.Module):
     """Critic network, employes two q-functions."""
+
     def __init__(
-        self, action_space, feature_extractor, hidden_dim,
-        feature_dim
+            self, action_space, feature_extractor, hidden_dim,
+            feature_dim
     ):
         super().__init__()
-
 
         # self.encoder = make_encoder(
         #     encoder_type, obs_shape, encoder_feature_dim, num_layers,
