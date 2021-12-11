@@ -18,7 +18,7 @@ from jueru.user.custom_actor_critic import CombinedExtractor, ddpg_actor, ddpg_c
 def test_dict_observation(algorithm_class):
     if algorithm_class == BaseAlgorithm:
         env = Uav_env(world_size=240, step_size=5, obstacle_num=5,
-                      max_step_num=100, display=True, fixed=False,
+                      max_step_num=100, display=False, fixed=False,
                       obs_size=66)
 
         feature_dim = 128
@@ -74,6 +74,7 @@ def test_dict_observation(algorithm_class):
                              min_update_step=1000,
                              update_step=100,
                              polyak=0.995,
+                             start_steps=1000,
                              )
 
         ddpg.learn(num_train_step=5000)

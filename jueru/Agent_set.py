@@ -119,14 +119,21 @@ class Sac_agent(Agent):
 class DDPG_agent(Agent):
 
     def choose_action(self, observation, noise_scale):
+        observation = observation.copy()
         with torch.no_grad():
             # print(observation)
-            a = self.functor_dict['actor'](torch.as_tensor(observation, dtype=torch.float32).reshape((1, -1)))
+            if isinstance(observation, Dict):
+                for key in observation.keys():
+                    observation[key] = torch.as_tensor(observation[key], dtype=torch.float32).unsqueeze(0)
+                a = self.functor_dict['actor'](observation)
+            else:
+                a = self.functor_dict['actor'](torch.as_tensor(observation, dtype=torch.float32).unsqueeze(0))
+            #a = self.functor_dict['actor'](observation)
             # print(a)
             a += noise_scale * np.random.randn(self.functor_dict['actor'].action_dim)
-            # print(a)
-            # print(self.actor.limit_low)
-        return np.clip(a, self.functor_dict['actor'].limit_low, self.functor_dict['actor'].limit_high)
+            a = a.squeeze(0).numpy()
+        #print(self.functor_dict['actor'].limit_low)
+        return np.clip(a, self.functor_dict['actor'].limit_low, self.functor_dict['actor'].limit_high).numpy()
 
     def predict(self, obs):
         return self.choose_action(obs, 0)

@@ -106,13 +106,15 @@ class BaseAlgorithm:
 
                 if step >= self.start_steps:
                     action = self.agent.choose_action(state, self.action_noise)
+                    print(action)
                 else:
                     action = self.env.action_space.sample()
-                # print(action)
+
                 next_state, reward, done, _ = self.env.step(action)
 
                 done_value = 0 if done else 1
                 # ('state', 'action', 'reward', 'next_state', 'mask', 'log_prob')
+                #print(state)
                 self.data_collection.store(state, action, reward, next_state, done_value)
 
                 state = next_state

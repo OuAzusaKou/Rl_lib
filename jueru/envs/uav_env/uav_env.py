@@ -114,7 +114,7 @@ class Uav_env(gym.Env):
         self.count = self.count + 1
         # print(self.agent_pos)
 
-        # print(action)
+        #print(action)
         reward = self.excute_action(action)
 
         # reward = self.get_reward(action)
@@ -169,7 +169,7 @@ class Uav_env(gym.Env):
         #print('t', target_array)
         dis = np.dot((agent_pos_array - target_array).T, (agent_pos_array - target_array))
         #print(dis)
-        reward -= dis*1e-4
+        reward -= dis*1e-6
         #print(reward)
         return reward
 
