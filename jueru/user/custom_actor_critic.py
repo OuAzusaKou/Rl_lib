@@ -170,8 +170,7 @@ class ddpg_actor(nn.Module):
         # print(self.limit_low)
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        print(self.linear(
-            self.feature_extractor(observations)))
+
         return (self.limit_high + self.limit_low) / 2 + (self.limit_high - self.limit_low) / 2 * self.linear(
             self.feature_extractor(observations))
 
