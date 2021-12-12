@@ -16,7 +16,7 @@ class BaseAlgorithm:
     def __init__(
             self,
             agent_class,
-            data_collection: None,
+            data_collection_dict: None,
             env: None,
             updator_dict=None,
             functor_dict=None,
@@ -68,7 +68,7 @@ class BaseAlgorithm:
 
         self.updator_dict = updator_dict
 
-        self.data_collection = data_collection(env=env, size=buffer_size)
+        self.data_collection_dict = data_collection_dict
 
         self.render = render
 
@@ -115,7 +115,7 @@ class BaseAlgorithm:
                 done_value = 0 if done else 1
                 # ('state', 'action', 'reward', 'next_state', 'mask', 'log_prob')
                 #print(state)
-                self.data_collection.store(state, action, reward, next_state, done_value)
+                self.data_collection_dict['replay_buffer'].store(state, action, reward, next_state, done_value)
 
                 state = next_state
 
@@ -123,7 +123,7 @@ class BaseAlgorithm:
 
                 if step >= self.min_update_step and step % self.update_step == 0:
                     for i in range(self.update_step):
-                        batch = self.data_collection.sample_batch(self.batch_size)  # random sample batch
+                        batch = self.data_collection_dict['replay_buffer'].sample_batch(self.batch_size)  # random sample batch
                         critic_loss = self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
                                                            reward=batch['reward'], next_state=batch['next_state'],
                                                            done_value=batch['done'], gamma=self.gamma)
@@ -187,7 +187,7 @@ class DQNAlgorithm(BaseAlgorithm):
 
                 done_value = 0 if done else 1
                 # ('state', 'action', 'reward', 'next_state', 'mask', 'log_prob')
-                self.data_collection.store(state, action, reward, next_state, done_value)
+                self.data_collection_dict['replay_buffer'].store(state, action, reward, next_state, done_value)
 
                 state = next_state
 
@@ -195,7 +195,7 @@ class DQNAlgorithm(BaseAlgorithm):
 
                 if step >= self.min_update_step and step % self.update_step == 0:
                     for _ in range(self.update_step):
-                        batch = self.data_collection.sample_batch(self.batch_size)  # random sample batch
+                        batch = self.data_collection_dict['replay_buffer'].sample_batch(self.batch_size)  # random sample batch
                         self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
                                                            reward=batch['reward'], next_state=batch['next_state'],
                                                            done_value=batch['done'], gamma=self.gamma)
@@ -237,7 +237,7 @@ class SACAlgorithm(BaseAlgorithm):
 
                 done_value = 0 if done else 1
                 # ('state', 'action', 'reward', 'next_state', 'mask', 'log_prob')
-                self.data_collection.store(state, action, reward, next_state, done_value)
+                self.data_collection_dict['replay_buffer'].store(state, action, reward, next_state, done_value)
 
                 state = next_state
 
@@ -245,7 +245,7 @@ class SACAlgorithm(BaseAlgorithm):
 
                 if step >= self.min_update_step and step % self.update_step == 0:
                     for _ in range(self.update_step):
-                        batch = self.data_collection.sample_batch(self.batch_size)
+                        batch = self.data_collection_dict['replay_buffer'].sample_batch(self.batch_size)
 
                         self.updator_dict['critic_update'](self.agent, obs=batch['state'], action=batch['action'],
                                                            reward=batch['reward'], next_obs=batch['next_state'],

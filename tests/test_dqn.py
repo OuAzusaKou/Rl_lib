@@ -15,7 +15,9 @@ feature_extractor = FlattenExtractor(env.observation_space)
 
 critic = dqn_critic(env.action_space, feature_extractor, np.prod(env.observation_space.shape))
 
-data_collection = Replay_buffer
+data_collection_dict = {}
+
+data_collection_dict['replay_buffer'] = Replay_buffer(env=env, size=1e6)
 
 functor_dict = {}
 
@@ -33,7 +35,7 @@ dqn = DQNAlgorithm(agent_class=DQN_agent,
                    functor_dict=functor_dict,
                    lr_dict=lr_dict,
                    updator_dict=updator_dict,
-                   data_collection=data_collection,
+                   data_collection_dict=data_collection_dict,
                    env=env,
                    buffer_size=1e6,
                    gamma=0.99,

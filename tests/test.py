@@ -39,7 +39,9 @@ if __name__ == "__main__":
 
     critic = ddpg_critic(env.action_space, feature_extractor, 3)
 
-    data_collection = Replay_buffer
+    data_collection_dict = {}
+
+    data_collection_dict['replay_buffer'] = Replay_buffer(env=env, size=1e6)
 
     functor_dict = {}
 
@@ -73,7 +75,7 @@ if __name__ == "__main__":
                          functor_dict=functor_dict,
                          lr_dict=lr_dict,
                          updator_dict=updator_dict,
-                         data_collection=data_collection,
+                         data_collection_dict=data_collection_dict,
                          env=env,
                          buffer_size=1e6,
                          gamma=0.99,

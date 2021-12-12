@@ -29,7 +29,9 @@ def test_dict_observation(algorithm_class):
 
         critic = ddpg_critic(env.action_space, feature_extractor, feature_dim+16)
 
-        data_collection = Dict_Replay_buffer
+        data_collection_dict = {}
+
+        data_collection_dict['replay_buffer'] = Dict_Replay_buffer(env=env, size=1e6)
 
         functor_dict = {}
 
@@ -63,7 +65,7 @@ def test_dict_observation(algorithm_class):
                              functor_dict=functor_dict,
                              lr_dict=lr_dict,
                              updator_dict=updator_dict,
-                             data_collection=data_collection,
+                             data_collection_dict=data_collection_dict,
                              env=env,
                              buffer_size=1e6,
                              gamma=0.99,

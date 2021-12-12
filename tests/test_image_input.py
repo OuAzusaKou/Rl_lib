@@ -17,7 +17,10 @@ feature_extractor = FlattenExtractor(env.observation_space)
 actor = ddpg_actor(env.action_space, feature_extractor, np.prod(env.observation_space.shape))
 
 critic = ddpg_critic(env.action_space, feature_extractor, np.prod(env.observation_space.shape))
-data_collection = Replay_buffer
+
+data_collection_dict = {}
+
+data_collection_dict['replay_buffer'] = Replay_buffer(env=env, size=1e6)
 
 functor_dict = {}
 
@@ -51,7 +54,7 @@ ddpg = BaseAlgorithm(agent_class=DDPG_agent,
                      functor_dict=functor_dict,
                      lr_dict=lr_dict,
                      updator_dict=updator_dict,
-                     data_collection=data_collection,
+                     data_collection_dict=data_collection_dict,
                      env=env,
                      buffer_size=1e6,
                      gamma=0.99,
