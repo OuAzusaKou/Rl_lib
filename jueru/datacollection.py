@@ -27,11 +27,11 @@ class Replay_buffer:
         self.ptr, self.size, self.max_size = 0, 0, size
 
     def store(self, obs, act, rew, next_obs, done):
-        self.state_buf[int(self.ptr)] = obs
-        self.next_state_buf[int(self.ptr)] = next_obs
-        self.action_buf[int(self.ptr)] = act
-        self.reward_buf[int(self.ptr)] = rew
-        self.done_buf[int(self.ptr)] = done
+        self.state_buf[int(self.ptr)] = np.array(obs).copy()
+        self.next_state_buf[int(self.ptr)] = np.array(next_obs).copy()
+        self.action_buf[int(self.ptr)] = np.array(act).copy()
+        self.reward_buf[int(self.ptr)] = np.array(rew).copy()
+        self.done_buf[int(self.ptr)] = np.array(done).copy()
         self.ptr = (self.ptr+1) % self.max_size
         self.size = min(self.size+1, self.max_size)
 
@@ -42,7 +42,7 @@ class Replay_buffer:
                      action=self.action_buf[idxs],
                      reward=self.reward_buf[idxs],
                      done=self.done_buf[idxs])
-        return {k: torch.as_tensor(v, dtype=torch.float32) for k,v in batch.items()}
+        return {k: torch.as_tensor(v.copy(), dtype=torch.float32) for k,v in batch.items()}
 
     def __len__(self):
         return len(self.state_buf)
@@ -72,29 +72,32 @@ class Dict_Replay_buffer:
 
     def store(self, obs, act, rew, next_obs, done):
         for key in self.state_buf.keys():
-            self.state_buf[key][int(self.ptr)] = obs[key].copy()
+            self.state_buf[key][int(self.ptr)] = np.array(obs[key]).copy()
         for key in self.next_state_buf.keys():
-            self.next_state_buf[key][int(self.ptr)] = next_obs[key].copy()
+            self.next_state_buf[key][int(self.ptr)] = np.array(next_obs[key]).copy()
 
-        self.action_buf[int(self.ptr)] = act
-        self.reward_buf[int(self.ptr)] = rew
-        self.done_buf[int(self.ptr)] = done
+        self.action_buf[int(self.ptr)] = np.array(act).copy()
+        self.reward_buf[int(self.ptr)] = np.array(rew).copy()
+        self.done_buf[int(self.ptr)] = np.array(done).copy()
         self.ptr = (self.ptr+1) % self.max_size
         self.size = min(self.size+1, self.max_size)
+        #print(self.ptr)
+        #print(self.size)
 
     def sample_batch(self, batch_size=32):
         idxs = np.random.randint(0, self.size, size=batch_size)
         state = {}
         next_state = {}
         for key, obs in self.state_buf.items():
-            state[key] = torch.as_tensor(obs[idxs], dtype=torch.float32)
+            state[key] = torch.as_tensor(obs[idxs].copy(), dtype=torch.float32)
         for key, obs in self.next_state_buf.items():
-            next_state[key] = torch.as_tensor(obs[idxs], dtype=torch.float32)
+            next_state[key] = torch.as_tensor(obs[idxs].copy(), dtype=torch.float32)
         batch = dict(state=state,
                      next_state=next_state,
-                     action=torch.as_tensor(self.action_buf[idxs], dtype=torch.float32),
-                     reward=torch.as_tensor(self.reward_buf[idxs], dtype=torch.float32),
-                     done=torch.as_tensor(self.done_buf[idxs], dtype=torch.float32))
+                     action=torch.as_tensor(self.action_buf[idxs].copy(), dtype=torch.float32),
+                     reward=torch.as_tensor(self.reward_buf[idxs].copy(), dtype=torch.float32),
+                     done=torch.as_tensor(self.done_buf[idxs].copy(), dtype=torch.float32))
+        #print(batch)
         return batch
 
     def __len__(self):

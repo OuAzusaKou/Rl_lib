@@ -122,25 +122,30 @@ class BaseAlgorithm:
                 episode_reward += reward
 
                 if step >= self.min_update_step and step % self.update_step == 0:
-                    for _ in range(self.update_step):
+                    for i in range(self.update_step):
                         batch = self.data_collection.sample_batch(self.batch_size)  # random sample batch
-                        self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
+                        critic_loss = self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
                                                            reward=batch['reward'], next_state=batch['next_state'],
                                                            done_value=batch['done'], gamma=self.gamma)
+                        if i % 2 == 0:
+                            actor_loss = self.updator_dict['actor_update'](self.agent, state=batch['state'], action=batch['action'],
+                                                              reward=batch['reward'], next_state=batch['next_state'],
+                                                              gamma=self.gamma)
 
-                        self.updator_dict['actor_update'](self.agent, state=batch['state'], action=batch['action'],
-                                                          reward=batch['reward'], next_state=batch['next_state'],
-                                                          gamma=self.gamma)
+                            self.updator_dict['soft_update'](self.agent.functor_dict['actor_target'],
+                                                             self.agent.functor_dict['actor'],
+                                                             polyak=self.polyak)
 
-                        self.updator_dict['soft_update'](self.agent.functor_dict['actor_target'],
-                                                         self.agent.functor_dict['actor'],
-                                                         polyak=self.polyak)
+                            self.updator_dict['soft_update'](self.agent.functor_dict['critic_target'],
+                                                             self.agent.functor_dict['critic'],
+                                                             polyak=self.polyak)
 
-                        self.updator_dict['soft_update'](self.agent.functor_dict['critic_target'],
-                                                         self.agent.functor_dict['critic'],
-                                                         polyak=self.polyak)
+                        self.writer.add_scalar('critic_loss', critic_loss, global_step=(step+i))
+                        self.writer.add_scalar('actor_loss', actor_loss, global_step=(step + i))
+
 
                 step += 1
+
                 if step >= self.min_update_step and step % self.save_interval == 0:
                     self.agent.save(address=self.model_address)
                 if done:

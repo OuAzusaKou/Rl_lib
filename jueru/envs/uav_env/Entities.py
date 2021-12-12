@@ -19,7 +19,7 @@ class Agent():
 
 
 class Obstacle:
-    def __init__(self, world_size, number_obstacle, fixed = False):
+    def __init__(self, world_size, number_obstacle, fixed = True):
         self.world_size = world_size
         self.number = number_obstacle
         self.shape = ['circle', 'rect']
@@ -72,7 +72,7 @@ class Obstacle:
 
 
 class Target:
-    def __init__(self, world_size, number_target, fixed = False):
+    def __init__(self, world_size, number_target, fixed = True):
         self.world_size = world_size
         self.number = number_target
         self.shape = 'circle'
@@ -90,8 +90,8 @@ class Target:
             size.append(np.random.randint(3, 5))
         return pos, size
     def fixed_target(self):
-        pos_list = []
-        size_list = []
+        pos_list = [[50, 50]]
+        size_list = [15]
         pos = []
         size = []
         for i in range(self.number):

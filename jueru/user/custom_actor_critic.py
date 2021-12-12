@@ -116,15 +116,15 @@ class CNNfeature_extractor(nn.Module):
         # Re-ordering will be done by pre-preprocessing or wrapper
         n_input_channels = observation_space.shape[0]
         self.cnn = nn.Sequential(
-            nn.Conv2d(n_input_channels, 64, kernel_size=3, stride=2, padding=0),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=0),
-            nn.ReLU(),
-            torch.nn.MaxPool2d(kernel_size=2, stride=1,
-                               padding=0, dilation=1, return_indices=False, ceil_mode=False),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=2, stride=1, padding=0),
-            nn.ReLU(),
+            # nn.Conv2d(n_input_channels, 64, kernel_size=3, stride=2, padding=0),
+            # nn.ReLU(),
+            # nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=0),
+            # nn.ReLU(),
+            # torch.nn.MaxPool2d(kernel_size=2, stride=1,
+            #                    padding=0, dilation=1, return_indices=False, ceil_mode=False),
+            # nn.ReLU(),
+            # nn.Conv2d(64, 64, kernel_size=2, stride=1, padding=0),
+            # nn.ReLU(),
             nn.Flatten(),
         )
 
@@ -165,11 +165,13 @@ class ddpg_actor(nn.Module):
                                     nn.Linear(256, self.action_dim), nn.Tanh())
 
         self.limit_high = torch.tensor(action_space.high)
-        # print(self.limit_high)
+        #print(self.limit_high)
         self.limit_low = torch.tensor(action_space.low)
         # print(self.limit_low)
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
+        print(self.linear(
+            self.feature_extractor(observations)))
         return (self.limit_high + self.limit_low) / 2 + (self.limit_high - self.limit_low) / 2 * self.linear(
             self.feature_extractor(observations))
 

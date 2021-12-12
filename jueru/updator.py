@@ -44,12 +44,14 @@ def critic_updator_ddpg(agent, state, action, reward, next_state, done_value, ga
     # print(value.mean())
     with torch.no_grad():
         target_next_value = agent.functor_dict['critic_target'](next_state, agent.functor_dict['actor_target'](next_state))
-        # print('reward', reward.shape)
+        #print('reward', reward)
+        #print(done_value)
         target_value = reward + gamma * (done_value) * target_next_value
+
     # print('done', done_value)
     # print('reward',reward.mean())
-    # print('target_value', target_value.mean(),)
-    # print('value', value.mean())
+    # print('target_value', target_value[0])
+    # print('value', value[0])
     value_loss = nn.MSELoss()(value, target_value)
     # print('loss',value_loss)
     agent.optimizer_dict['critic'].zero_grad()
@@ -59,7 +61,7 @@ def critic_updator_ddpg(agent, state, action, reward, next_state, done_value, ga
     #     print('-->name:', name, '-->grad_requirs:', parms.requires_grad, \
     #           ' -->grad_value:', parms.grad)
 
-    return
+    return value_loss
 
 
 def actor_updator_ddpg(agent, state, action, reward, next_state, gamma):
@@ -74,7 +76,7 @@ def actor_updator_ddpg(agent, state, action, reward, next_state, gamma):
 
     for p in agent.functor_dict['critic'].parameters():
         p.requires_grad = True
-    return
+    return policy_loss
 
 
 def discriminator_updator(agent, state, action, label):
