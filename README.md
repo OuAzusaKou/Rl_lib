@@ -92,9 +92,13 @@ env = gym.make('CartPole-v0')
 
 feature_extractor = FlattenExtractor(env.observation_space)
 
+# actor = dqn_actor(env.action_space, feature_extractor, 3)
+
 critic = dqn_critic(env.action_space, feature_extractor, np.prod(env.observation_space.shape))
 
-data_collection = Replay_buffer
+data_collection_dict = {}
+
+data_collection_dict['replay_buffer'] = Replay_buffer(env=env, size=1e6)
 
 functor_dict = {}
 
@@ -112,7 +116,7 @@ dqn = DQNAlgorithm(agent_class=DQN_agent,
                    functor_dict=functor_dict,
                    lr_dict=lr_dict,
                    updator_dict=updator_dict,
-                   data_collection=data_collection,
+                   data_collection_dict=data_collection_dict,
                    env=env,
                    buffer_size=1e6,
                    gamma=0.99,
@@ -125,12 +129,12 @@ dqn = DQNAlgorithm(agent_class=DQN_agent,
                    polyak=0.995,
                    )
 
-dqn.learn(num_train_step=5)
+dqn.learn(num_train_step=5000)
 
 agent = DQN_agent.load('Base_model_address')
 
 obs = env.reset()
-for i in range(1000):
+for i in range(1001):
     action = agent.predict(obs)
     obs, reward, done, info = env.step(action)
     env.render()
