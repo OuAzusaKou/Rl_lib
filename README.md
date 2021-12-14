@@ -34,6 +34,7 @@ DQN, DDPG, SAC, GAIL, MADDPG, MAGAIL.
 | Custom Agent | :heavy_check_mark: |:x:|
 | Custom Learning | :heavy_check_mark: |:x:|
 | Custom Functor | :heavy_check_mark: |:x:|
+| Custom Executor | :heavy_check_mark: |:x:|
 | Custom Updator | :heavy_check_mark: |:x:|
 | Multi-Agent       | :heavy_check_mark: |:x:|
 | Documentation               | :heavy_check_mark: |:heavy_check_mark:|
@@ -42,7 +43,7 @@ DQN, DDPG, SAC, GAIL, MADDPG, MAGAIL.
 | Common interface            | :heavy_check_mark: |:heavy_check_mark:|
 | Ipython / Notebook friendly | :heavy_check_mark: | :heavy_check_mark: |
 | Tensorboard support         | :heavy_check_mark: | :heavy_check_mark: |
-| `Dict` observation space support  | :x: |:heavy_check_mark:|
+| `Dict` observation space support  | :heavy_check_mark: |:heavy_check_mark:|
 | State of the art RL methods |:x:| :heavy_check_mark: |
 
 
