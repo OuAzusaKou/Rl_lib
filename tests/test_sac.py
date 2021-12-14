@@ -29,7 +29,9 @@ log_alpha.requires_grad = True
 
 Sac_agent = Sac_agent
 
-data_collection = Replay_buffer
+data_collection_dict = {}
+
+data_collection_dict['replay_buffer'] = Replay_buffer(env=env, size=1e6)
 
 functor_dict = {}
 
@@ -63,9 +65,8 @@ sac = SACAlgorithm(agent_class=Sac_agent,
                      functor_dict=functor_dict,
                      lr_dict=lr_dict,
                      updator_dict=updator_dict,
-                     data_collection=data_collection,
+                     data_collection_dict=data_collection_dict,
                      env=env,
-                     buffer_size=1e6,
                      gamma=0.99,
                      batch_size=100,
                      tensorboard_log="./SAC_tensorboard",
