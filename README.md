@@ -67,7 +67,7 @@ Jueru requires python 3.7+.
 ### Install using pip
 Install the Jueru package:
 ```
-pip install jueru
+python setup.py install
 ```
 **Note:** Some shells such as Zsh require quotation marks around brackets, i.e. `pip install 'stable-baselines3[extra]'` ([More Info](https://stackoverflow.com/a/30539963)).
 
