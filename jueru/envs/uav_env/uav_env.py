@@ -227,7 +227,6 @@ class Uav_env(gym.Env):
         #     self.agent_pos[:2] = self.agent_pos[:2] + np.array([0, -1])*8
         # # elif action == 4:
         #     self.agent_pos[:2] = self.agent_pos[:2] + np.array([0, 0])*5
-
         self.agent_pos = self.agent_pos + self.step_size * np.array([np.cos(action * np.pi), np.sin(action * np.pi)])[:,
                                                            0]
         # change robot pos if robot collide with the bound

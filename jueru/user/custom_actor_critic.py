@@ -116,15 +116,15 @@ class CNNfeature_extractor(nn.Module):
         # Re-ordering will be done by pre-preprocessing or wrapper
         n_input_channels = observation_space.shape[0]
         self.cnn = nn.Sequential(
-            # nn.Conv2d(n_input_channels, 64, kernel_size=3, stride=2, padding=0),
-            # nn.ReLU(),
-            # nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=0),
-            # nn.ReLU(),
-            # torch.nn.MaxPool2d(kernel_size=2, stride=1,
-            #                    padding=0, dilation=1, return_indices=False, ceil_mode=False),
-            # nn.ReLU(),
-            # nn.Conv2d(64, 64, kernel_size=2, stride=1, padding=0),
-            # nn.ReLU(),
+            nn.Conv2d(n_input_channels, 64, kernel_size=3, stride=2, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=0),
+            nn.ReLU(),
+            torch.nn.MaxPool2d(kernel_size=2, stride=1,
+                               padding=0, dilation=1, return_indices=False, ceil_mode=False),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=2, stride=1, padding=0),
+            nn.ReLU(),
             nn.Flatten(),
         )
 
@@ -141,17 +141,23 @@ class CNNfeature_extractor(nn.Module):
 
 
 class MLPfeature_extractor(nn.Module):
-    def __init__(self, observation_space: gym.spaces.Space, features_dim: int = 256):
+    def __init__(self, observation_space: gym.spaces.Space, net_arch=[], features_dim: int = 256, ):
         super(MLPfeature_extractor, self).__init__()
-        # input_dim = get_flattened_obs_dim(observation_space)
+        input_dim = get_flattened_obs_dim(observation_space)
 
-        # create_mlp(input_dim=observation_space.shape[0])
-        # self.linear = nn.Sequential(nn.Linear(observation_space.shape[0], features_dim), nn.ReLU())
+        self.modules_list = create_mlp(input_dim=input_dim,
+                                 net_arch=net_arch,
+                                 output_dim= features_dim
+                                 )
+        #print(self.modules_list)
+        self.linear = nn.Sequential(*self.modules_list)
+        #self.linear = nn.Sequential(nn.Linear(observation_space.shape[0], features_dim), nn.ReLU())
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
         # print(observations)
         # print(observations)
-        return observations
+        feature = self.linear(observations)
+        return feature
 
 
 class ddpg_actor(nn.Module):

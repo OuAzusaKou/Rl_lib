@@ -28,7 +28,7 @@ class BaseAlgorithm:
             exploration_fraction: float = 0.2,
             polyak: float = 0.9,
             agent_args: Dict[str, Any] = None,
-            buffer_size: int = 1e5,
+            max_episode_steps = None,
             gamma: float = 0.95,
             batch_size: int = 512,
             tensorboard_log: str = "./DQN_tensorboard/",
@@ -43,6 +43,7 @@ class BaseAlgorithm:
         self.env = env
         os.makedirs(tensorboard_log, exist_ok=True)
         os.makedirs(model_address, exist_ok=True)
+        self.max_episode_steps = max_episode_steps
         self.model_address = model_address
         self.save_interval = save_interval
         self.writer = SummaryWriter(tensorboard_log)
@@ -127,7 +128,7 @@ class BaseAlgorithm:
                         critic_loss = self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
                                                            reward=batch['reward'], next_state=batch['next_state'],
                                                            done_value=batch['done'], gamma=self.gamma)
-                        if i % 2 == 0:
+                        if i % 4 == 0:
                             actor_loss = self.updator_dict['actor_update'](self.agent, state=batch['state'], action=batch['action'],
                                                               reward=batch['reward'], next_state=batch['next_state'],
                                                               gamma=self.gamma)
@@ -212,7 +213,7 @@ class DQNAlgorithm(BaseAlgorithm):
 
 
 class SACAlgorithm(BaseAlgorithm):
-    def learn(self, num_train_step, actor_update_freq):
+    def learn(self, num_train_step, actor_update_freq, reward_scale=1):
         self.actor_update_freq = actor_update_freq
 
         step = 0
@@ -221,7 +222,7 @@ class SACAlgorithm(BaseAlgorithm):
 
             state = self.env.reset()
             episode_reward = 0
-
+            episode_step = 0
             while True:
 
                 if self.render:
@@ -234,6 +235,13 @@ class SACAlgorithm(BaseAlgorithm):
                         action = self.agent.sample_action(state)
 
                 next_state, reward, done, _ = self.env.step(action)
+
+                reward = reward_scale * reward
+
+                episode_step+=1
+                if self.max_episode_steps:
+                    if episode_step == self.max_episode_steps:
+                        done = True
 
                 done_value = 0 if done else 1
                 # ('state', 'action', 'reward', 'next_state', 'mask', 'log_prob')
