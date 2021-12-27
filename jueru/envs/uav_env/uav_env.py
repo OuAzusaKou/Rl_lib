@@ -118,7 +118,10 @@ class Uav_env(gym.Env):
         reward = self.excute_action(action)
 
         # reward = self.get_reward(action)
-        info = {}
+        if reward > 0:
+            info = 1
+        else:
+            info = -1
 
         done = self.get_done()
 
@@ -169,7 +172,7 @@ class Uav_env(gym.Env):
         #print('t', target_array)
         dis = np.dot((agent_pos_array - target_array).T, (agent_pos_array - target_array))
         #print(dis)
-        reward -= dis*1e-3
+        reward -= dis*1e-4
         #print(reward)
         return reward
 

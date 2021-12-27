@@ -85,6 +85,9 @@ class Dict_Replay_buffer:
         #print(self.size)
 
     def sample_batch(self, batch_size=32):
+
+        batch_size = min(batch_size, self.size)
+
         idxs = np.random.randint(0, self.size, size=batch_size)
         state = {}
         next_state = {}
