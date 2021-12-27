@@ -183,7 +183,7 @@ class GAIL_DataSet:
         :param label: label 0 for data from actor, 1 for data from demonstrator.
         :return:
         '''
-        if (obs is None) or (act is None)  or (label is None):
+        if (obs is None) or (act is None) or (label is None):
             return
         self.state_buf[int(self.ptr)] = obs
         self.action_buf[int(self.ptr)] = act
