@@ -99,19 +99,33 @@ class Sac_agent(Agent):
 
     def select_action(self, obs):
         with torch.no_grad():
-            obs = torch.FloatTensor(obs)
-            obs = obs.unsqueeze(0)
-            mu, _, _, _ = self.functor_dict['actor'](
-                obs, compute_pi=False, compute_log_pi=False
-            )
+            if isinstance(obs, Dict):
+                for key in obs.keys():
+                    obs[key] = torch.as_tensor(obs[key], dtype=torch.float32).unsqueeze(0)
+
+                mu, _, _, _ = self.functor_dict['actor'](
+                    obs, compute_pi=False, compute_log_pi=False
+                )
+            else:
+                obs = torch.FloatTensor(obs)
+                obs = obs.unsqueeze(0)
+                mu, _, _, _ = self.functor_dict['actor'](
+                    obs, compute_pi=False, compute_log_pi=False
+                )
             return mu.cpu().data.numpy().flatten()
 
     def sample_action(self, obs):
 
         with torch.no_grad():
-            obs = torch.FloatTensor(obs)
-            obs = obs.unsqueeze(0)
-            mu, pi, _, _ = self.functor_dict['actor'](obs, compute_log_pi=False)
+            if isinstance(obs, Dict):
+                for key in obs.keys():
+                    obs[key] = torch.as_tensor(obs[key], dtype=torch.float32).unsqueeze(0)
+                mu, pi, _, _ = self.functor_dict['actor'](obs, compute_log_pi=False)
+            else:
+
+                obs = torch.FloatTensor(obs)
+                obs = obs.unsqueeze(0)
+                mu, pi, _, _ = self.functor_dict['actor'](obs, compute_log_pi=False)
             return pi.cpu().data.numpy().flatten()
     def predict(self, obs):
         return self.select_action(obs)
