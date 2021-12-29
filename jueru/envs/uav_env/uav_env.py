@@ -196,7 +196,7 @@ class Uav_env(gym.Env):
         im = Image.fromarray(np.uint8(img_array)).convert('L').resize((22, 22))
         im_array = np.array(im).reshape((22, 22, 1)).transpose(2, 0, 1)
         # print(im_array.shape)
-        im.save('obs.png')
+        #im.save('obs.png')
 
         return im_array
 
