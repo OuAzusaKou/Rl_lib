@@ -184,6 +184,12 @@ def critic_updator_sac(agent, obs, action, reward, next_obs, not_done, gamma):
     critic_loss.backward()
     agent.optimizer_dict['critic'].step()
 
+    # for name, parms in agent.functor_dict['critic'].named_parameters():
+    #     print('-->name:', name, '-->grad_requirs:', parms.requires_grad,
+    #           )#\
+    #           #' -->grad_value:', parms.grad)
+
+
 def actor_and_alpha_updator_sac(agent, obs, target_entropy):
     # detach encoder, so we don't update it with the actor loss
     _, pi, log_pi, log_std = agent.functor_dict['actor'](obs)

@@ -59,7 +59,7 @@ class Uav_env(gym.Env):
         self.action_list = [[1, 1], [-1, -1], [0, 0], [-1, 1], [1, -1]]
         self.observation_space = spaces.Dict({'image': spaces.Box(low=0, high=255,
                                                                   shape=(1, 22, 22), dtype=np.uint8),
-                                              'target': spaces.Box(low=0, high=self.world_size,
+                                              'target': spaces.Box(low=0, high=1,
                                                                    shape=(4,), dtype=np.float32)
                                               })
 
@@ -110,7 +110,7 @@ class Uav_env(gym.Env):
         return obs
 
     def step(self, action):
-
+        info = {}
         self.count = self.count + 1
         # print(self.agent_pos)
 
@@ -118,14 +118,15 @@ class Uav_env(gym.Env):
         reward = self.excute_action(action)
 
         # reward = self.get_reward(action)
-        if reward > 0:
-            info = 1
-        else:
-            info = -1
+        # if reward > 0:
+        #     info = 1
+        # else:
+        #     info = -1
 
         done = self.get_done()
 
         obs = self._get_obs()
+        #print(reward)
         return obs, reward, done, info
 
     def render(self, mode='console'):
@@ -145,7 +146,7 @@ class Uav_env(gym.Env):
             if pygame.sprite.collide_mask(agent, self.target_list.sprites()[i]):
                 self.target_list.remove(self.target_list.sprites()[i])
                 self.trash_num = self.trash_num - 1
-                reward += 10
+                reward += 2
                 break
         for j in range(self.obstacle_num):
             if pygame.sprite.collide_mask(agent, self.obstacle_list.sprites()[j]):
@@ -170,7 +171,7 @@ class Uav_env(gym.Env):
         target_array = np.array(self.target_pos[0])
         #print('a', agent_pos_array)
         #print('t', target_array)
-        dis = np.dot((agent_pos_array - target_array).T, (agent_pos_array - target_array))
+        dis = np.sqrt(np.dot((agent_pos_array - target_array).T, (agent_pos_array - target_array)))
         #print(dis)
         reward -= dis*1e-4
         #print(reward)
@@ -187,7 +188,7 @@ class Uav_env(gym.Env):
 
     def Capture(self, display, name, pos, size):  # (pygame Surface, String, tuple, tuple)
         image = pygame.Surface(size)  # Create image surface
-        image.blit(display, (0, 0), (pos, size))  # Blit portion of the display to the image
+        image.blit(display, (0, 0), ((pos[0]-size[0]/2,pos[1]-size[1]/2), size))  # Blit portion of the display to the image
 
         img_array = pygame.surfarray.array3d(image).transpose(1, 0, 2)
         save_im = Image.fromarray(np.uint8(img_array)).convert('L')
@@ -195,7 +196,7 @@ class Uav_env(gym.Env):
         im = Image.fromarray(np.uint8(img_array)).convert('L').resize((22, 22))
         im_array = np.array(im).reshape((22, 22, 1)).transpose(2, 0, 1)
         # print(im_array.shape)
-        # im.save('obs.png')
+        im.save('obs.png')
 
         return im_array
 
@@ -211,7 +212,7 @@ class Uav_env(gym.Env):
         #print(target_array)
         #print(agent_pos_array)
         observation_dict = {'image': im,
-                            'target': np.float32(np.concatenate([target_array, agent_pos_array]))}
+                            'target': np.float32(np.concatenate([target_array/self.world_size, agent_pos_array/self.world_size]))}
         # print(im.shape)
         return observation_dict
 
@@ -348,7 +349,7 @@ if __name__ == '__main__':
     env = Uav_env(world_size=240, step_size=5, obstacle_num=5, max_step_num=100, display=True, fixed=False, obs_size=66)
     check_env(env)
     obs = env.reset()
-    # env.record_video()
+    #env.record_video()
     episode_reward = 0
     while True:
         # action = env.action_space.sample()

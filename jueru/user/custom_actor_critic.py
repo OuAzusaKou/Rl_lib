@@ -137,7 +137,7 @@ class CNNfeature_extractor(nn.Module):
         self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        return self.linear(self.cnn(observations))
+        return self.linear(self.cnn(observations/255))
 
 
 class MLPfeature_extractor(nn.Module):

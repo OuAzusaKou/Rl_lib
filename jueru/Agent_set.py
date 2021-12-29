@@ -112,6 +112,7 @@ class Sac_agent(Agent):
                 mu, _, _, _ = self.functor_dict['actor'](
                     obs, compute_pi=False, compute_log_pi=False
                 )
+
             return mu.cpu().data.numpy().flatten()
 
     def sample_action(self, obs):
@@ -126,6 +127,7 @@ class Sac_agent(Agent):
                 obs = torch.FloatTensor(obs)
                 obs = obs.unsqueeze(0)
                 mu, pi, _, _ = self.functor_dict['actor'](obs, compute_log_pi=False)
+            print(pi)
             return pi.cpu().data.numpy().flatten()
     def predict(self, obs):
         return self.select_action(obs)
