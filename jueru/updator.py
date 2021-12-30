@@ -165,7 +165,9 @@ def critic_updator_dqn(agent, state, action, reward, next_state, done_value, gam
 
 def critic_updator_sac(agent, obs, action, reward, next_obs, not_done, gamma):
     with torch.no_grad():
+        print('nt', next_obs)
         _, policy_action, log_pi, _ = agent.functor_dict['actor'](next_obs)
+        print('no', next_obs)
         target_Q1, target_Q2 = agent.functor_dict['critic_target'](next_obs, policy_action)
         target_V = torch.min(target_Q1,
                              target_Q2) - agent.functor_dict['log_alpha'].exp().detach() * log_pi
@@ -184,10 +186,9 @@ def critic_updator_sac(agent, obs, action, reward, next_obs, not_done, gamma):
     critic_loss.backward()
     agent.optimizer_dict['critic'].step()
 
-    # for name, parms in agent.functor_dict['critic'].named_parameters():
-    #     print('-->name:', name, '-->grad_requirs:', parms.requires_grad,
-    #           )#\
-    #           #' -->grad_value:', parms.grad)
+    for name, parms in agent.functor_dict['critic'].named_parameters():
+        print('-->name:', name, '-->grad_requirs:', parms.requires_grad, \
+              ' -->grad_value:', parms.grad)
 
 
 def actor_and_alpha_updator_sac(agent, obs, target_entropy):

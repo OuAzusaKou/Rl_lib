@@ -118,7 +118,7 @@ class BaseAlgorithm:
                 #print(state)
                 self.data_collection_dict['replay_buffer'].store(state, action, reward, next_state, done_value)
 
-                state = next_state
+                state = next_state.copy()
 
                 episode_reward += reward
 
@@ -247,7 +247,7 @@ class SACAlgorithm(BaseAlgorithm):
                 # ('state', 'action', 'reward', 'next_state', 'mask', 'log_prob')
                 self.data_collection_dict['replay_buffer'].store(state, action, reward, next_state, done_value)
 
-                state = next_state
+                state = next_state.copy()
 
                 episode_reward += reward
 

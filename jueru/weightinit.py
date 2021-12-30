@@ -8,6 +8,7 @@ def weight_init(m):
   # 也可以判断是否为conv2d，使用相应的初始化方式
   elif isinstance(m, nn.Conv2d):
     nn.init.kaiming_normal_(m.weight, mode='fan_out')
+    #print('init')
   # 是否为批归一化层
   elif isinstance(m, nn.BatchNorm2d):
     nn.init.constant_(m.weight, 1)

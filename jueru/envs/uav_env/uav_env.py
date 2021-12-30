@@ -150,7 +150,7 @@ class Uav_env(gym.Env):
                 break
         for j in range(self.obstacle_num):
             if pygame.sprite.collide_mask(agent, self.obstacle_list.sprites()[j]):
-                # reward -= 0.05
+                reward -= 0.05
                 self.agent_pos = self.agent_buf
                 break
         # print(self.agent_pos)
@@ -173,7 +173,7 @@ class Uav_env(gym.Env):
         #print('t', target_array)
         dis = np.sqrt(np.dot((agent_pos_array - target_array).T, (agent_pos_array - target_array)))
         #print(dis)
-        reward -= dis*1e-4
+        #reward -= dis*1e-4
         #print(reward)
         return reward
 
@@ -234,12 +234,12 @@ class Uav_env(gym.Env):
         self.agent_pos = self.agent_pos + self.step_size * np.array([np.cos(action * np.pi), np.sin(action * np.pi)])[:,
                                                            0]
         # change robot pos if robot collide with the bound
-        # print(self.agent_pos)
+        #print(self.agent_pos)
         if self.agent_pos[0] > (self.world_size - 1) or self.agent_pos[1] > (self.world_size - 1) or self.agent_pos[
             0] < 0 or (
                 self.agent_pos[1] < 0):
             self.agent_pos = np.clip(self.agent_pos, 0, (self.world_size - 1))
-            # reward = reward - 0.5
+            reward = reward - 0.05
         # print(f'current agent pos :{self.agent_pos}')
         reward += self.render()
         return reward
@@ -346,7 +346,7 @@ class Block(pygame.sprite.Sprite):
 
 if __name__ == '__main__':
 
-    env = Uav_env(world_size=240, step_size=5, obstacle_num=5, max_step_num=100, display=True, fixed=False, obs_size=66)
+    env = Uav_env(world_size=240, step_size=20, obstacle_num=5, max_step_num=100, display=True, fixed=False, obs_size=66)
     check_env(env)
     obs = env.reset()
     #env.record_video()

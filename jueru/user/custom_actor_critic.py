@@ -115,16 +115,17 @@ class CNNfeature_extractor(nn.Module):
         # We assume CxHxW images (channels first)
         # Re-ordering will be done by pre-preprocessing or wrapper
         n_input_channels = observation_space.shape[0]
+        #print(n_input_channels)
         self.cnn = nn.Sequential(
-            nn.Conv2d(n_input_channels, 64, kernel_size=3, stride=2, padding=0),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=0),
-            nn.ReLU(),
-            torch.nn.MaxPool2d(kernel_size=2, stride=1,
-                               padding=0, dilation=1, return_indices=False, ceil_mode=False),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=2, stride=1, padding=0),
-            nn.ReLU(),
+            # nn.Conv2d(n_input_channels, 64, kernel_size=3, stride=1, padding=0),
+            # nn.ReLU(),
+            # nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
+            # nn.ReLU(),
+            # torch.nn.MaxPool2d(kernel_size=3, stride=1,
+            #                    padding=0, dilation=1, return_indices=False, ceil_mode=False),
+            # nn.ReLU(),
+            # nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=0),
+            # nn.ReLU(),
             nn.Flatten(),
         )
 
@@ -137,7 +138,8 @@ class CNNfeature_extractor(nn.Module):
         self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        return self.linear(self.cnn(observations/255))
+        print(self.linear(self.cnn(torch.FloatTensor(observations)/255)))
+        return self.linear(self.cnn(torch.FloatTensor(observations)/255))
 
 
 class MLPfeature_extractor(nn.Module):
@@ -230,7 +232,7 @@ class Sac_actor(nn.Module):
     ):
         super().__init__()
 
-        self.encoder = feature_extractor
+        self.feature_extractor = feature_extractor
         self.action_dim = get_action_dim(action_space)
         self.log_std_min = log_std_min
         self.log_std_max = log_std_max
@@ -246,7 +248,7 @@ class Sac_actor(nn.Module):
     def forward(
             self, obs, compute_pi=True, compute_log_pi=True
     ):
-        obs = self.encoder(obs)
+        obs = self.feature_extractor(obs)
 
         mu, log_std = self.trunk(obs).chunk(2, dim=-1)
 
@@ -309,7 +311,7 @@ class Sac_critic(nn.Module):
         #     encoder_type, obs_shape, encoder_feature_dim, num_layers,
         #     num_filters, output_logits=True
         # )
-        self.encoder = feature_extractor
+        self.feature_extractor = feature_extractor
         self.action_dim = get_action_dim(action_space)
 
         self.Q1 = QFunction(
@@ -323,12 +325,13 @@ class Sac_critic(nn.Module):
 
     def forward(self, obs, action):
         # detach_encoder allows to stop gradient propogation to encoder
-        obs = self.encoder(obs)
+        with torch.no_grad():
+            obs = self.feature_extractor(obs)
 
         q1 = self.Q1(obs, action)
         q2 = self.Q2(obs, action)
 
-        self.outputs['q1'] = q1
-        self.outputs['q2'] = q2
+        # self.outputs['q1'] = q1
+        # self.outputs['q2'] = q2
 
         return q1, q2
