@@ -255,3 +255,21 @@ def squash(mu, pi, log_pi):
     if log_pi is not None:
         log_pi -= torch.log(F.relu(1 - pi.pow(2)) + 1e-6).sum(-1, keepdim=True)
     return mu, pi, log_pi
+
+def merge_dict_batch(batch1,batch2):
+    state = {}
+    for key, obs in batch1['state'].items():
+        state[key] = torch.cat([obs, batch2['state'][key]])
+    next_state = {}
+    for key, obs in batch1['next_state'].items():
+        next_state[key] = torch.cat([obs, batch2['next_state'][key]])
+    action = torch.cat([batch1['action'], batch2['action']])
+    reward = torch.cat([batch1['reward'], batch2['reward']])
+    done = torch.cat([batch1['done'], batch2['done']])
+    batch = dict(state=state,
+                 next_state=next_state,
+                 action=action,
+                 reward=reward,
+                 done=done)
+
+    return batch
