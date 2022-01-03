@@ -168,8 +168,14 @@ class DQN_agent(Agent):
 
     def choose_action_by_critic(self, observation):
         with torch.no_grad():
-            a = np.argmax(
-                self.functor_dict['critic'](torch.as_tensor(observation, dtype=torch.float32).reshape((1, -1))))
+            if isinstance(observation, Dict):
+                for key in observation.keys():
+                    observation[key] = torch.as_tensor(observation[key], dtype=torch.float32).unsqueeze(0)
+                a = np.argmax(
+                    self.functor_dict['critic'](observation))
+            else:
+                a = np.argmax(
+                    self.functor_dict['critic'](torch.as_tensor(observation, dtype=torch.float32).reshape((1, -1))))
 
         return a
 

@@ -117,15 +117,15 @@ class CNNfeature_extractor(nn.Module):
         n_input_channels = observation_space.shape[0]
         #print(n_input_channels)
         self.cnn = nn.Sequential(
-            # nn.Conv2d(n_input_channels, 64, kernel_size=3, stride=1, padding=0),
-            # nn.ReLU(),
-            # nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
-            # nn.ReLU(),
-            # torch.nn.MaxPool2d(kernel_size=3, stride=1,
-            #                    padding=0, dilation=1, return_indices=False, ceil_mode=False),
-            # nn.ReLU(),
-            # nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=0),
-            # nn.ReLU(),
+            nn.Conv2d(n_input_channels, 64, kernel_size=3, stride=1, padding=0),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
+            nn.ReLU(),
+            torch.nn.MaxPool2d(kernel_size=3, stride=1,
+                               padding=0, dilation=1, return_indices=False, ceil_mode=False),
+            nn.ReLU(),
+            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=0),
+            nn.ReLU(),
             nn.Flatten(),
         )
 
@@ -138,7 +138,7 @@ class CNNfeature_extractor(nn.Module):
         self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        print(self.linear(self.cnn(torch.FloatTensor(observations)/255)))
+
         return self.linear(self.cnn(torch.FloatTensor(observations)/255))
 
 

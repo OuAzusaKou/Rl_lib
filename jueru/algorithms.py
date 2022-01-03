@@ -215,7 +215,8 @@ class DQNAlgorithm(BaseAlgorithm):
 class SACAlgorithm(BaseAlgorithm):
     def learn(self, num_train_step, actor_update_freq, reward_scale=1):
         self.actor_update_freq = actor_update_freq
-
+        self.agent.functor_dict['actor'].train()
+        self.agent.functor_dict['critic'].train()
         step = 0
 
         while step <= (num_train_step):
