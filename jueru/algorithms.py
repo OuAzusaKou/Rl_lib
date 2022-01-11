@@ -1,7 +1,6 @@
 import os
 from random import random
-from typing import Dict, Any
-
+from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import torch
 
@@ -38,12 +37,18 @@ class BaseAlgorithm:
             update_step: int = 100,
             start_steps: int = 10000,
             model_address: str = "./Base_model_address",
+            save_mode: str = 'step',
             save_interval: int = 5000,
+            eval_freq: int = 100,
+            eval_num_episode: int = 10
     ):
         self.env = env
         os.makedirs(tensorboard_log, exist_ok=True)
         os.makedirs(model_address, exist_ok=True)
         self.max_episode_steps = max_episode_steps
+        self.eval_num_episode = eval_num_episode
+        self.save_mode = save_mode
+        self.eval_freq = eval_freq
         self.model_address = model_address
         self.save_interval = save_interval
         self.writer = SummaryWriter(tensorboard_log)

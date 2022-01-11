@@ -172,8 +172,8 @@ class Uav_env(gym.Env):
         #print('a', agent_pos_array)
         #print('t', target_array)
         dis = np.sqrt(np.dot((agent_pos_array - target_array).T, (agent_pos_array - target_array)))
-        #print(dis)
-        #reward -= dis*1e-4
+        #print(dis*1e-5)
+        reward -= dis*3e-5
         #print(reward)
         return reward
 
