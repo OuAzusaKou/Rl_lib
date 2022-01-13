@@ -33,16 +33,16 @@ class Obstacle:
         pos = []
         size = []
         shape = []
-        for i in range(self.number):
-
-            pos.append(np.random.randint(0, self.world_size-1, 2).tolist())
-            a = np.random.uniform(0, 1)
-            if a < 0.25:
-                shape.append(self.shape[0])
-                size.append(np.random.randint(5, 20))
-            else:
-                shape.append(self.shape[1])
-                size.append(np.random.randint(8, 40, 2).tolist())
+        # for i in range(self.number):
+        #
+        #     pos.append(np.random.randint(0, self.world_size-1, 2).tolist())
+        #     a = np.random.uniform(0, 1)
+        #     if a < 0.25:
+        #         shape.append(self.shape[0])
+        #         size.append(np.random.randint(5, 20))
+        #     else:
+        #         shape.append(self.shape[1])
+        #         size.append(np.random.randint(8, 40, 2).tolist())
         return shape, pos, size
 
     def fixed_obstacle(self):

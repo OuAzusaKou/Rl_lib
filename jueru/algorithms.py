@@ -92,6 +92,31 @@ class BaseAlgorithm:
 
         self.start_steps = start_steps
 
+    def eval_performance(self, num_episode, step):
+        obs = self.env.reset()
+        target_count = 0
+        count_episode = 0
+        episode_reward = 0
+        list_episode_reward = []
+        success_num = 0
+        while count_episode < num_episode:
+            action = self.agent.predict(obs)
+            obs, reward, done, info = self.env.step(action)
+            episode_reward += reward
+            # env.render()
+            if done:
+                if reward > 0:
+                    success_num += 1
+                obs = self.env.reset()
+                count_episode += 1
+                list_episode_reward.append(episode_reward.copy())
+                episode_reward = 0
+        success_rate = success_num / num_episode
+        average_reward = sum(list_episode_reward) / len(list_episode_reward)
+        self.writer.add_scalar('eval_average_reward', average_reward, global_step=step)
+        self.writer.add_scalar('eval_success_rate', success_rate, global_step=step)
+        return average_reward
+
     def learn(self, num_train_step):
         """interact"""
         self.agent.functor_dict['actor'].train()
@@ -200,12 +225,13 @@ class DQNAlgorithm(BaseAlgorithm):
                 episode_reward += reward
 
                 if step >= self.min_update_step and step % self.update_step == 0:
-                    for _ in range(self.update_step):
+                    for i in range(self.update_step):
                         batch = self.data_collection_dict['replay_buffer'].sample_batch(self.batch_size)  # random sample batch
-                        self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
+                        loss = self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
                                                            reward=batch['reward'], next_state=batch['next_state'],
                                                            done_value=batch['done'], gamma=self.gamma)
 
+                        self.writer.add_scalar('loss', loss, global_step=(step+i))
                 step += 1
 
                 self.exploration_rate = self.exploration_func((1 - step / num_train_step))
@@ -223,7 +249,8 @@ class SACAlgorithm(BaseAlgorithm):
         self.agent.functor_dict['actor'].train()
         self.agent.functor_dict['critic'].train()
         step = 0
-
+        episode_num = 0
+        average_reward_buf = - 1e6
         while step <= (num_train_step):
 
             state = self.env.reset()
@@ -276,11 +303,16 @@ class SACAlgorithm(BaseAlgorithm):
                                                          polyak=self.polyak)
 
                 step += 1
-                if step >= self.min_update_step and step % self.save_interval == 0:
-                    self.agent.save(address=self.model_address)
+                # if step >= self.min_update_step and step % self.save_interval == 0:
+                #     self.agent.save(address=self.model_address)
                 if done:
-                    self.writer.add_scalar('episode_reward_step', episode_reward, global_step=step)
-
+                    self.writer.add_scalar('episode_reward', episode_reward, global_step=step)
+                    if self.save_mode == 'eval':
+                        if step >= self.min_update_step and episode_num % self.eval_freq == 0:
+                            average_reward = self.eval_performance(num_episode=self.eval_num_episode, step=step)
+                            if average_reward > average_reward_buf:
+                                self.agent.save(address=self.model_address)
+                            average_reward_buf = average_reward
                     break
 
 

@@ -160,7 +160,7 @@ def critic_updator_dqn(agent, state, action, reward, next_state, done_value, gam
     #     print('-->name:', name, '-->grad_requirs:', parms.requires_grad, \
     #           ' -->grad_value:', parms.grad)
 
-    return
+    return value_loss
 
 
 def critic_updator_sac(agent, obs, action, reward, next_obs, not_done, gamma):

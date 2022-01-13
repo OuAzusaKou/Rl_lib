@@ -32,7 +32,7 @@ class Uav_env(gym.Env):
         self.fixed = fixed
 
         # for obstacles
-        self.obstacle = Obstacle(world_size=self.world_size, number_obstacle=obstacle_num)
+        self.obstacle = Obstacle(world_size=self.world_size, number_obstacle=obstacle_num, fixed=self.fixed)
         self.obstacle_num = obstacle_num
         self.obst_shape = self.obstacle.shape_list
         self.obst_pos = self.obstacle.pos_list
@@ -67,7 +67,7 @@ class Uav_env(gym.Env):
 
     def reset_obstacle(self):
         # word_size change to self.world_size - 2* obs_size
-        self.obstacle = Obstacle(world_size=self.world_size, number_obstacle=self.obstacle_num)
+        self.obstacle = Obstacle(world_size=self.world_size, number_obstacle=self.obstacle_num, fixed=self.fixed)
         self.obst_shape = self.obstacle.shape_list
         # print('shape', self.obst_shape)
         self.obst_pos = self.obstacle.pos_list
@@ -346,7 +346,7 @@ class Block(pygame.sprite.Sprite):
 
 if __name__ == '__main__':
 
-    env = Uav_env(world_size=240, step_size=20, obstacle_num=5, max_step_num=100, display=True, fixed=False, obs_size=66)
+    env = Uav_env(world_size=240, step_size=20, obstacle_num=0, max_step_num=100, display=True, fixed=False, obs_size=66)
     check_env(env)
     obs = env.reset()
     #env.record_video()

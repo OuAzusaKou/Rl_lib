@@ -115,9 +115,11 @@ class SignleReplay_buffer:
         :param action_space: env action_space
         :param size: buffer size
         '''
-        self.state_buf = np.zeros((int(size), *observation_space.shape), dtype=np.float32)
-        self.next_state_buf = np.zeros((int(size), *observation_space.shape), dtype=np.float32)
-        self.action_buf = np.zeros((int(size), *action_space.shape), dtype=np.float32)
+        self.obs_shape = get_obs_shape(observation_space)
+        self.action_dim = get_action_dim(action_space)
+        self.state_buf = np.zeros((int(size), *self.obs_shape), dtype=np.float32)
+        self.next_state_buf = np.zeros((int(size), *self.obs_shape), dtype=np.float32)
+        self.action_buf = np.zeros((int(size), self.action_dim), dtype=np.float32)
         self.reward_buf = np.zeros((int(size), 1), dtype=np.float32)
         self.done_buf = np.zeros((int(size), 1), dtype=np.float32)
         self.ptr, self.size, self.max_size = 0, 0, size
