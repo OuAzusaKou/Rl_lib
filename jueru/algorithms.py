@@ -70,6 +70,7 @@ class BaseAlgorithm:
                                               end=exploration_end,
                                               end_fraction=self.exploration_fraction)
 
+
         if agent_args:
 
             self.agent = agent_class(functor_dict=functor_dict,
