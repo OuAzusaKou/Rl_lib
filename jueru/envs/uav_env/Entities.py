@@ -86,11 +86,11 @@ class Target:
         pos = []
         size = []
         for i in range(self.number):
-            pos.append(np.random.randint(0, self.world_size-1, 2).tolist())
+            pos.append(np.random.randint(50, self.world_size-50, 2).tolist())
             size.append(np.random.randint(3, 5))
         return pos, size
     def fixed_target(self):
-        pos_list = [[200, 200]]
+        pos_list = [np.random.randint(0, self.world_size-1, 2).tolist()]
         size_list = [15]
         pos = []
         size = []

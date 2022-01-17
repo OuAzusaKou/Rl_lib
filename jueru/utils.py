@@ -1,3 +1,4 @@
+import glob
 import os
 
 import torch
@@ -273,3 +274,20 @@ def merge_dict_batch(batch1,batch2):
                  done=done)
 
     return batch
+
+
+
+def get_latest_run_id(log_path: Optional[str] = None, log_name: str = "") -> int:
+    """
+    Returns the latest run number for the given log name and log path,
+    by finding the greatest number in the directories.
+
+    :return: latest run number
+    """
+    max_run_id = 0
+    for path in glob.glob(f"{log_path}/{log_name}_[0-9]*"):
+        file_name = path.split(os.sep)[-1]
+        ext = file_name.split("_")[-1]
+        if log_name == "_".join(file_name.split("_")[:-1]) and ext.isdigit() and int(ext) > max_run_id:
+            max_run_id = int(ext)
+    return max_run_id

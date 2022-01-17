@@ -10,6 +10,8 @@ from tensorboardX import SummaryWriter
 
 from jueru.utils import get_linear_fn
 
+from jueru.utils import get_latest_run_id
+
 
 class BaseAlgorithm:
     def __init__(
@@ -31,6 +33,7 @@ class BaseAlgorithm:
             gamma: float = 0.95,
             batch_size: int = 512,
             tensorboard_log: str = "./DQN_tensorboard/",
+            tensorboard_log_name: str = "run",
             render: bool = False,
             action_noise: float = 0.1,
             min_update_step: int = 1000,
@@ -40,18 +43,25 @@ class BaseAlgorithm:
             save_mode: str = 'step',
             save_interval: int = 5000,
             eval_freq: int = 100,
-            eval_num_episode: int = 10
+            eval_num_episode: int = 10,
+
     ):
         self.env = env
         os.makedirs(tensorboard_log, exist_ok=True)
         os.makedirs(model_address, exist_ok=True)
+        latest_run_id = get_latest_run_id(tensorboard_log, tensorboard_log_name)
+
+        save_path = os.path.join(tensorboard_log, f"{tensorboard_log_name}_{latest_run_id + 1}")
+
+        os.makedirs(save_path, exist_ok=True)
+
         self.max_episode_steps = max_episode_steps
         self.eval_num_episode = eval_num_episode
         self.save_mode = save_mode
         self.eval_freq = eval_freq
         self.model_address = model_address
         self.save_interval = save_interval
-        self.writer = SummaryWriter(tensorboard_log)
+        self.writer = SummaryWriter(save_path)
         self.exploration_rate = exploration_rate
         self.exploration_start = exploration_start
         self.exploration_end = exploration_end
@@ -91,6 +101,8 @@ class BaseAlgorithm:
         self.polyak = polyak
 
         self.start_steps = start_steps
+
+
 
     def eval_performance(self, num_episode, step):
         obs = self.env.reset()
@@ -306,6 +318,7 @@ class SACAlgorithm(BaseAlgorithm):
                 # if step >= self.min_update_step and step % self.save_interval == 0:
                 #     self.agent.save(address=self.model_address)
                 if done:
+                    episode_num += 1
                     self.writer.add_scalar('episode_reward', episode_reward, global_step=step)
                     if self.save_mode == 'eval':
                         if step >= self.min_update_step and episode_num % self.eval_freq == 0:

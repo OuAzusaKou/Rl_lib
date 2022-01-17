@@ -58,7 +58,7 @@ class Uav_env(gym.Env):
         self.action_space = spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
         self.action_list = [[1, 1], [-1, -1], [0, 0], [-1, 1], [1, -1]]
         self.observation_space = spaces.Dict({'image': spaces.Box(low=0, high=255,
-                                                                  shape=(1, 22, 22), dtype=np.uint8),
+                                                                  shape=(3, 22, 22), dtype=np.uint8),
                                               'target': spaces.Box(low=0, high=1,
                                                                    shape=(4,), dtype=np.float32)
                                               })
@@ -191,11 +191,11 @@ class Uav_env(gym.Env):
         image.blit(display, (0, 0), ((pos[0]-size[0]/2,pos[1]-size[1]/2), size))  # Blit portion of the display to the image
 
         img_array = pygame.surfarray.array3d(image).transpose(1, 0, 2)
-        save_im = Image.fromarray(np.uint8(img_array)).convert('L')
-        #save_im.save('obs.png')
-        im = Image.fromarray(np.uint8(img_array)).convert('L').resize((22, 22))
-        im_array = np.array(im).reshape((22, 22, 1)).transpose(2, 0, 1)
-        # print(im_array.shape)
+        save_im = Image.fromarray(np.uint8(img_array))
+        #save_im.save('obs.png').  #convert('L').
+        im = Image.fromarray(np.uint8(img_array)).resize((22, 22))
+        im_array = np.array(im).reshape((22, 22, 3)).transpose(2, 0, 1)
+        #print(im_array.shape)
         #im.save('obs.png')
 
         return im_array
@@ -346,7 +346,7 @@ class Block(pygame.sprite.Sprite):
 
 if __name__ == '__main__':
 
-    env = Uav_env(world_size=240, step_size=20, obstacle_num=0, max_step_num=100, display=True, fixed=False, obs_size=66)
+    env = Uav_env(world_size=240, step_size=20, obstacle_num=5, max_step_num=100, display=True, fixed=True, obs_size=66)
     check_env(env)
     obs = env.reset()
     #env.record_video()
