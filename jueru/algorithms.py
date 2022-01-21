@@ -1,3 +1,4 @@
+import copy
 import os
 from random import random
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -122,7 +123,7 @@ class BaseAlgorithm:
                     success_num += 1
                 obs = self.env.reset()
                 count_episode += 1
-                list_episode_reward.append(episode_reward.copy())
+                list_episode_reward.append(copy.deepcopy(episode_reward))
                 episode_reward = 0
         success_rate = success_num / num_episode
         average_reward = sum(list_episode_reward) / len(list_episode_reward)

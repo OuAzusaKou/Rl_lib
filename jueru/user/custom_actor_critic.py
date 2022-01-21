@@ -63,11 +63,13 @@ class CombinedExtractor(nn.Module):
             if key == "image":
                 # We will just downsample one channel of the image by 4x4 and flatten.
                 # Assume the image is single-channel (subspace.shape[0] == 0)
-                extractors[key] = CNNfeature_extractor(observation_space=subspace, features_dim=feature_dim)
+                # extractors[key] = CNNfeature_extractor(observation_space=subspace, features_dim=feature_dim)
+                extractors[key] = FlattenExtractor(observation_space=subspace)
                 total_concat_size += feature_dim
             elif key == "target":
                 # Run through a simple MLP
-                extractors[key] = nn.Linear(subspace.shape[0], 16)
+                # extractors[key] = nn.Linear(subspace.shape[0], 16)
+                extractors[key] = FlattenExtractor(observation_space=subspace)
                 total_concat_size += 16
 
         self.extractors = nn.ModuleDict(extractors)
@@ -79,8 +81,10 @@ class CombinedExtractor(nn.Module):
         encoded_tensor_list = []
 
         # self.extractors contain nn.Modules that do all the processing.
-        for key, extractor in self.extractors.items():
-            encoded_tensor_list.append(extractor(observations[key]))
+        # for key, extractor in self.extractors.items():
+        #     encoded_tensor_list.append(extractor(observations[key]))
+        encoded_tensor_list.append(self.extractors['image'](torch.FloatTensor(observations['image'])/255))
+        encoded_tensor_list.append(self.extractors['target'](observations['target']))
         # Return a (B, self._features_dim) PyTorch tensor, where B is batch dimension.
         return torch.cat(encoded_tensor_list, dim=1)
 

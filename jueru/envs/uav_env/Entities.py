@@ -90,7 +90,8 @@ class Target:
             size.append(np.random.randint(3, 5))
         return pos, size
     def fixed_target(self):
-        pos_list = [np.random.randint(0, self.world_size-1, 2).tolist()]
+        # pos_list = [np.random.randint(0, self.world_size-1, 2).tolist()]
+        pos_list = [np.array([150, 200]).tolist()]
         size_list = [15]
         pos = []
         size = []
