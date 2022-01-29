@@ -143,7 +143,14 @@ class Sac_agent(Agent):
 
 class DDPG_agent(Agent):
 
-    def choose_action(self, observation, noise_scale):
+    def choose_action(self, observation: object, noise_scale: object) -> object:
+        """
+        
+        :rtype: object
+        :param observation: 
+        :param noise_scale: 
+        :return: 
+        """
         observation = observation.copy()
         with torch.no_grad():
             # print(observation)

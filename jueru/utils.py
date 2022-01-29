@@ -275,6 +275,29 @@ def merge_dict_batch(batch1,batch2):
 
     return batch
 
+def merge_batch(batch1,batch2):
+
+    if batch1['state'].shape[0] == 0:
+        batch = batch2
+        return batch
+    if batch2['state'].shape[0] == 0:
+        batch = batch1
+        return batch
+    # print(batch1['state'].shape)
+    # print(batch2['state'].shape)
+
+    state = torch.cat([batch1['state'], batch2['state']])
+    next_state = torch.cat([batch1['next_state'], batch2['next_state']])
+    action = torch.cat([batch1['action'], batch2['action']])
+    reward = torch.cat([batch1['reward'], batch2['reward']])
+    done = torch.cat([batch1['done'], batch2['done']])
+    batch = dict(state=state,
+                 next_state=next_state,
+                 action=action,
+                 reward=reward,
+                 done=done)
+    return batch
+
 
 
 def get_latest_run_id(log_path: Optional[str] = None, log_name: str = "") -> int:

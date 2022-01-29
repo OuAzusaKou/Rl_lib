@@ -137,8 +137,10 @@ class BaseAlgorithm:
         self.agent.functor_dict['critic'].train()
         # self.agent.actor_target.train()
         # self.agent.critic_target.train()
-        step = 0
 
+        step = 0
+        episode_num=0
+        average_reward_buf = - 1e6
         while step <= (num_train_step):
 
             state = self.env.reset()
@@ -194,8 +196,16 @@ class BaseAlgorithm:
                 if step >= self.min_update_step and step % self.save_interval == 0:
                     self.agent.save(address=self.model_address)
                 if done:
+                    episode_num += 1
+
                     self.writer.add_scalar('episode_reward', episode_reward, global_step=step)
 
+                    if self.save_mode == 'eval':
+                        if step >= self.min_update_step and episode_num % self.eval_freq == 0:
+                            average_reward = self.eval_performance(num_episode=self.eval_num_episode, step=step)
+                            if average_reward > average_reward_buf:
+                                self.agent.save(address=self.model_address)
+                            average_reward_buf = average_reward
                     break
 
 

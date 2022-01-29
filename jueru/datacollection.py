@@ -36,6 +36,9 @@ class Replay_buffer:
         self.size = min(self.size+1, self.max_size)
 
     def sample_batch(self, batch_size=32):
+
+        batch_size = min(batch_size, self.size)
+
         idxs = np.random.randint(0, self.size, size=batch_size)
         batch = dict(state=self.state_buf[idxs],
                      next_state=self.next_state_buf[idxs],
