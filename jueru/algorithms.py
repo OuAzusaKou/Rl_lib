@@ -193,8 +193,8 @@ class BaseAlgorithm:
 
                 step += 1
 
-                if step >= self.min_update_step and step % self.save_interval == 0:
-                    self.agent.save(address=self.model_address)
+                # if step >= self.min_update_step and step % self.save_interval == 0:
+                #     self.agent.save(address=self.model_address)
                 if done:
                     episode_num += 1
 
@@ -205,7 +205,7 @@ class BaseAlgorithm:
                             average_reward = self.eval_performance(num_episode=self.eval_num_episode, step=step)
                             if average_reward > average_reward_buf:
                                 self.agent.save(address=self.model_address)
-                            average_reward_buf = average_reward
+                                average_reward_buf = average_reward
                     break
 
 
@@ -216,7 +216,8 @@ class DQNAlgorithm(BaseAlgorithm):
         # self.agent.actor_target.train()
         # self.agent.critic_target.train()
         step = 0
-
+        episode_num=0
+        average_reward_buf = - 1e6
         while step <= (num_train_step):
 
             state = self.env.reset()
@@ -259,12 +260,27 @@ class DQNAlgorithm(BaseAlgorithm):
                 step += 1
 
                 self.exploration_rate = self.exploration_func((1 - step / num_train_step))
-                if step >= self.min_update_step and step % self.save_interval == 0:
-                    self.agent.save(address=self.model_address)
+                # if step >= self.min_update_step and step % self.save_interval == 0:
+                #     self.agent.save(address=self.model_address)
                 if done:
+
+                    episode_num += 1
+
+                    self.writer.add_scalar('episode_reward', episode_reward, global_step=step)
+
+                    if self.save_mode == 'eval':
+                        print('eval')
+                        if step >= self.min_update_step and episode_num % self.eval_freq == 0:
+                            average_reward = self.eval_performance(num_episode=self.eval_num_episode, step=step)
+                            if average_reward >= average_reward_buf:
+                                self.agent.save(address=self.model_address)
+                                average_reward_buf = average_reward
+
                     self.writer.add_scalar('episode_reward_step', episode_reward, global_step=step)
                     self.writer.add_scalar('exploration_rate_step', self.exploration_rate, global_step=step)
+
                     break
+
 
 
 class SACAlgorithm(BaseAlgorithm):
