@@ -50,7 +50,6 @@ class Replay_buffer:
     def __len__(self):
         return len(self.state_buf)
 
-
 class Dict_Replay_buffer:
     '''single agent dict_replay_buffer'''
     def __init__(self, env, size):

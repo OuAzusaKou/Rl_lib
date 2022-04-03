@@ -31,6 +31,7 @@ class BaseAlgorithm:
             polyak: float = 0.9,
             agent_args: Dict[str, Any] = None,
             max_episode_steps = None,
+            eval_func = None,
             gamma: float = 0.95,
             batch_size: int = 512,
             tensorboard_log: str = "./DQN_tensorboard/",
@@ -48,6 +49,7 @@ class BaseAlgorithm:
 
     ):
         self.env = env
+        self.eval_func = eval_func
         os.makedirs(tensorboard_log, exist_ok=True)
         os.makedirs(model_address, exist_ok=True)
         latest_run_id = get_latest_run_id(tensorboard_log, tensorboard_log_name)
@@ -215,10 +217,10 @@ class DQNAlgorithm(BaseAlgorithm):
         self.agent.functor_dict['critic'].train()
         # self.agent.actor_target.train()
         # self.agent.critic_target.train()
-        step = 0
+        self.step_num = 0
         episode_num=0
         average_reward_buf = - 1e6
-        while step <= (num_train_step):
+        while self.step_num <= (num_train_step):
 
             state = self.env.reset()
             episode_reward = 0
@@ -249,35 +251,36 @@ class DQNAlgorithm(BaseAlgorithm):
 
                 episode_reward += reward
 
-                if step >= self.min_update_step and step % self.update_step == 0:
+                if self.step_num >= self.min_update_step and self.step_num % self.update_step == 0:
                     for i in range(self.update_step):
                         batch = self.data_collection_dict['replay_buffer'].sample_batch(self.batch_size)  # random sample batch
                         loss = self.updator_dict['critic_update'](self.agent, state=batch['state'], action=batch['action'],
                                                            reward=batch['reward'], next_state=batch['next_state'],
                                                            done_value=batch['done'], gamma=self.gamma)
 
-                        self.writer.add_scalar('loss', loss, global_step=(step+i))
-                step += 1
+                        self.writer.add_scalar('loss', loss, global_step=(self.step_num+i))
+                self.step_num += 1
 
-                self.exploration_rate = self.exploration_func((1 - step / num_train_step))
+                self.exploration_rate = self.exploration_func((1 - self.step_num / num_train_step))
                 # if step >= self.min_update_step and step % self.save_interval == 0:
                 #     self.agent.save(address=self.model_address)
                 if done:
 
                     episode_num += 1
 
-                    self.writer.add_scalar('episode_reward', episode_reward, global_step=step)
+                    self.writer.add_scalar('episode_reward', episode_reward, global_step=self.step_num)
 
                     if self.save_mode == 'eval':
                         print('eval')
-                        if step >= self.min_update_step and episode_num % self.eval_freq == 0:
-                            average_reward = self.eval_performance(num_episode=self.eval_num_episode, step=step)
+                        if self.step_num >= self.min_update_step and episode_num % self.eval_freq == 0:
+                            average_reward = self.eval_performance(num_episode=self.eval_num_episode, step=self.step_num)
                             if average_reward >= average_reward_buf:
                                 self.agent.save(address=self.model_address)
                                 average_reward_buf = average_reward
-
-                    self.writer.add_scalar('episode_reward_step', episode_reward, global_step=step)
-                    self.writer.add_scalar('exploration_rate_step', self.exploration_rate, global_step=step)
+                            if self.eval_func:
+                                self.eval_func(self)
+                    self.writer.add_scalar('episode_reward_step', episode_reward, global_step=self.step_num)
+                    self.writer.add_scalar('exploration_rate_step', self.exploration_rate, global_step=self.step_num)
 
                     break
 
