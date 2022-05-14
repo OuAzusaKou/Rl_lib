@@ -1,6 +1,7 @@
 from typing import List, Type
 
 import gym
+import numpy as np
 import torch
 from torch import nn
 
@@ -47,7 +48,9 @@ def create_mlp(
     return modules
 
 
+
 class CombinedExtractor(nn.Module):
+    '''to do feature_dim'''
     def __init__(self, observation_space: gym.spaces.Dict, feature_dim = 128):
         super(CombinedExtractor, self).__init__()
         # We do not know features-dim here before going over all the items,
@@ -99,8 +102,12 @@ class FlattenExtractor(nn.Module):
 
     def __init__(self, observation_space: gym.Space):
         super(FlattenExtractor, self).__init__()
-
+        self.features_dim = np.prod(observation_space.shape)
         self.flatten = nn.Flatten()
+
+    @property
+    def feature_dim(self):
+        return self.features_dim
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
         # print(observations)
@@ -118,6 +125,7 @@ class CNNfeature_extractor(nn.Module):
         super(CNNfeature_extractor, self).__init__()
         # We assume CxHxW images (channels first)
         # Re-ordering will be done by pre-preprocessing or wrapper
+        print(observation_space.shape)
         n_input_channels = observation_space.shape[0]
         #print(n_input_channels)
         self.cnn = nn.Sequential(
@@ -140,7 +148,11 @@ class CNNfeature_extractor(nn.Module):
             ).shape[1]
 
         self.linear = nn.Sequential(nn.Linear(n_flatten, features_dim), nn.ReLU())
+        self.features_dim = features_dim
 
+    @property
+    def feature_dim(self):
+        return self.features_dim
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
 
         return self.linear(self.cnn(torch.FloatTensor(observations)/255))
@@ -158,6 +170,10 @@ class MLPfeature_extractor(nn.Module):
         #print(self.modules_list)
         self.linear = nn.Sequential(*self.modules_list)
         #self.linear = nn.Sequential(nn.Linear(observation_space.shape[0], features_dim), nn.ReLU())
+        self.features_dim = features_dim
+    @property
+    def feature_dim(self):
+        return self.features_dim
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
         # print(observations)
@@ -167,9 +183,11 @@ class MLPfeature_extractor(nn.Module):
 
 
 class ddpg_actor(nn.Module):
-    def __init__(self, action_space, feature_extractor, feature_dim):
+    def __init__(self, action_space, feature_extractor):
         super(ddpg_actor, self).__init__()
         self.feature_extractor = feature_extractor
+
+        feature_dim = self.feature_extractor.feature_dim
 
         self.action_dim = get_action_dim(action_space)
 
@@ -188,9 +206,12 @@ class ddpg_actor(nn.Module):
 
 
 class ddpg_critic(nn.Module):
-    def __init__(self, action_space, feature_extractor, feature_dim):
+    def __init__(self, action_space, feature_extractor):
         super(ddpg_critic, self).__init__()
         self.feature_extractor = feature_extractor
+
+        feature_dim = self.feature_extractor.feature_dim
+
         self.action_dim = get_action_dim(action_space)
         self.linear = nn.Sequential(nn.Linear(feature_dim + self.action_dim, 256), nn.ReLU(), nn.Linear(256, 256),
                                     nn.ReLU(), nn.Linear(256, 1))
@@ -212,9 +233,11 @@ class gail_discriminator(nn.Module):
 
 
 class dqn_critic(nn.Module):
-    def __init__(self, action_space, feature_extractor, feature_dim):
+    def __init__(self, action_space, feature_extractor):
         super(dqn_critic, self).__init__()
         self.feature_extractor = feature_extractor
+
+        feature_dim = self.feature_extractor.feature_dim
 
         self.action_dim = action_space.n
 
@@ -232,11 +255,14 @@ class Sac_actor(nn.Module):
 
     def __init__(
             self, action_space, hidden_dim, feature_extractor,
-            feature_dim, log_std_min, log_std_max
+             log_std_min, log_std_max
     ):
         super().__init__()
 
         self.feature_extractor = feature_extractor
+
+        feature_dim = self.feature_extractor.feature_dim
+
         self.action_dim = get_action_dim(action_space)
         self.log_std_min = log_std_min
         self.log_std_max = log_std_max
@@ -307,7 +333,7 @@ class Sac_critic(nn.Module):
 
     def __init__(
             self, action_space, feature_extractor, hidden_dim,
-            feature_dim
+
     ):
         super().__init__()
 
@@ -316,6 +342,9 @@ class Sac_critic(nn.Module):
         #     num_filters, output_logits=True
         # )
         self.feature_extractor = feature_extractor
+
+        feature_dim = self.feature_extractor.feature_dim
+
         self.action_dim = get_action_dim(action_space)
 
         self.Q1 = QFunction(

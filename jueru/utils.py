@@ -180,8 +180,9 @@ def get_action_dim(action_space: spaces.Space) -> int:
     else:
         raise NotImplementedError(f"{action_space} action space is not supported")
 
+
 def get_obs_shape(
-    observation_space: spaces.Space,
+        observation_space: spaces.Space,
 ) -> Union[Tuple[int, ...], Dict[str, Tuple[int, ...]]]:
     """
     Get the shape of the observation (useful for the buffers).
@@ -230,6 +231,7 @@ def get_linear_fn(start: float, end: float, end_fraction: float) -> Schedule:
 
     return func
 
+
 def scan_root(root_):
     file_list = []
     dir_list = []
@@ -242,10 +244,12 @@ def scan_root(root_):
             file_list.append(os.path.join(root, file))
     return file_list, dir_list
 
+
 def gaussian_logprob(noise, log_std):
     """Compute Gaussian log probability."""
     residual = (-0.5 * noise.pow(2) - log_std).sum(-1, keepdim=True)
     return residual - 0.5 * np.log(2 * np.pi) * noise.size(-1)
+
 
 def squash(mu, pi, log_pi):
     """Apply squashing function.
@@ -258,7 +262,8 @@ def squash(mu, pi, log_pi):
         log_pi -= torch.log(F.relu(1 - pi.pow(2)) + 1e-6).sum(-1, keepdim=True)
     return mu, pi, log_pi
 
-def merge_dict_batch(batch1,batch2):
+
+def merge_dict_batch(batch1, batch2):
     state = {}
     for key, obs in batch1['state'].items():
         state[key] = torch.cat([obs, batch2['state'][key]])
@@ -276,8 +281,8 @@ def merge_dict_batch(batch1,batch2):
 
     return batch
 
-def merge_batch(batch1,batch2):
 
+def merge_batch(batch1, batch2):
     if batch1['state'].shape[0] == 0:
         batch = batch2
         return batch
@@ -300,7 +305,6 @@ def merge_batch(batch1,batch2):
     return batch
 
 
-
 def get_latest_run_id(log_path: Optional[str] = None, log_name: str = "") -> int:
     """
     Returns the latest run number for the given log name and log path,
@@ -315,6 +319,7 @@ def get_latest_run_id(log_path: Optional[str] = None, log_name: str = "") -> int
         if log_name == "_".join(file_name.split("_")[:-1]) and ext.isdigit() and int(ext) > max_run_id:
             max_run_id = int(ext)
     return max_run_id
+
 
 class FrameStack(gym.Wrapper):
     def __init__(self, env, k):
@@ -344,3 +349,42 @@ class FrameStack(gym.Wrapper):
     def _get_obs(self):
         assert len(self._frames) == self._k
         return np.concatenate(list(self._frames), axis=0)
+
+
+class Channel_First_wrapper(gym.Wrapper):
+    def __init__(self, env):
+        gym.Wrapper.__init__(self, env)
+        self.channel_first_flag = True
+        shp = env.observation_space.shape
+        assert (len(shp) == 3)
+        if shp[2] <= 3:
+            shp = (shp[2], shp[0], shp[1])
+            self.channel_first_flag = False
+        self.obs_high = env.observation_space.high[0, 0, 0]
+        self.obs_low = env.observation_space.low[0, 0, 0]
+
+        self.observation_space = gym.spaces.Box(
+            low=0,
+            high=1,
+            shape=shp,
+            dtype=env.observation_space.dtype
+        )
+        self._max_episode_steps = env._max_episode_steps
+
+    def reset(self):
+        obs = self.env.reset()
+        if not self.channel_first_flag:
+            obs = obs.transpose(2, 0, 1)
+
+        # print('obs', obs.shape)
+        # print('obs_low', self.obs_low.shape)
+        obs = (obs - self.obs_low) / (self.obs_high - self.obs_low)
+
+        return obs
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        if not self.channel_first_flag:
+            obs = obs.transpose(2, 0, 1)
+        obs = (obs - self.obs_low) / (self.obs_high - self.obs_low)
+        return obs, reward, done, info
