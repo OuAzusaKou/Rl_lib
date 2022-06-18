@@ -63,7 +63,7 @@ def test_ddpg(feature_extractor):
                              gamma=0.99,
                              batch_size=100,
                              tensorboard_log="./DQN_tensorboard/",
-                             render=True,
+                             render=False,
                              action_noise=0.1,
                              min_update_step=1000,
                              update_step=100,

@@ -15,7 +15,7 @@ def test_dqn():
 
     # actor = dqn_actor(env.action_space, feature_extractor, 3)
 
-    critic = dqn_critic(env.action_space, feature_extractor, np.prod(env.observation_space.shape))
+    critic = dqn_critic(env.action_space, feature_extractor)
 
     data_collection_dict = {}
 
@@ -39,7 +39,6 @@ def test_dqn():
                        updator_dict=updator_dict,
                        data_collection_dict=data_collection_dict,
                        env=env,
-                       buffer_size=1e6,
                        gamma=0.99,
                        batch_size=100,
                        tensorboard_log="./DQN_tensorboard",

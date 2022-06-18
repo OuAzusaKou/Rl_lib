@@ -14,6 +14,7 @@ def create_mlp(
         net_arch: List[int],
         activation_fn: Type[nn.Module] = nn.ReLU,
         squash_output: bool = False,
+        batch_norm: bool = False,
 ) -> List[nn.Module]:
     """
   Create a multi layer perceptron (MLP), which is
@@ -28,30 +29,85 @@ def create_mlp(
       to use after each layer.
   :param squash_output: Whether to squash the output using a Tanh
       activation function
+  :param batch_norm: Whether to batch_norm hidden layer, not output layer.
   :return:
   """
 
     if len(net_arch) > 0:
-        modules = [nn.Linear(input_dim, net_arch[0]), activation_fn()]
+        if batch_norm:
+            modules = [nn.Linear(input_dim, net_arch[0]), nn.BatchNorm1d(net_arch[0]), activation_fn()]
+        else:
+            modules = [nn.Linear(input_dim, net_arch[0]), activation_fn(), ]
     else:
         modules = []
 
     for idx in range(len(net_arch) - 1):
-        modules.append(nn.Linear(net_arch[idx], net_arch[idx + 1]))
-        modules.append(activation_fn())
+        if batch_norm:
+            modules.append(nn.Linear(net_arch[idx], net_arch[idx + 1]))
+            modules.append(nn.BatchNorm1d(net_arch[idx + 1]))
+            modules.append(activation_fn())
+
+        else:
+            modules.append(nn.Linear(net_arch[idx], net_arch[idx + 1]))
+            modules.append(activation_fn())
 
     if output_dim > 0:
-        last_layer_dim = net_arch[-1] if len(net_arch) > 0 else input_dim
-        modules.append(nn.Linear(last_layer_dim, output_dim))
+        if batch_norm:
+            last_layer_dim = net_arch[-1] if len(net_arch) > 0 else input_dim
+            modules.append(nn.Linear(last_layer_dim, output_dim))
+            # modules.append(nn.BatchNorm1d(output_dim))
+        else:
+            last_layer_dim = net_arch[-1] if len(net_arch) > 0 else input_dim
+            modules.append(nn.Linear(last_layer_dim, output_dim))
     if squash_output:
         modules.append(nn.Tanh())
     return modules
 
 
+# def create_mlp(
+#         input_dim: int,
+#         output_dim: int,
+#         net_arch: List[int],
+#         activation_fn: Type[nn.Module] = nn.ReLU,
+#         squash_output: bool = False,
+# ) -> List[nn.Module]:
+#     """
+#   Create a multi layer perceptron (MLP), which is
+#   a collection of fully-connected layers each followed by an activation function.
+#
+#   :param input_dim: Dimension of the input vector
+#   :param output_dim:
+#   :param net_arch: Architecture of the neural net
+#       It represents the number of units per layer.
+#       The length of this list is the number of layers.
+#   :param activation_fn: The activation function
+#       to use after each layer.
+#   :param squash_output: Whether to squash the output using a Tanh
+#       activation function
+#   :return:
+#   """
+#
+#     if len(net_arch) > 0:
+#         modules = [nn.Linear(input_dim, net_arch[0]), activation_fn()]
+#     else:
+#         modules = []
+#
+#     for idx in range(len(net_arch) - 1):
+#         modules.append(nn.Linear(net_arch[idx], net_arch[idx + 1]))
+#         modules.append(activation_fn())
+#
+#     if output_dim > 0:
+#         last_layer_dim = net_arch[-1] if len(net_arch) > 0 else input_dim
+#         modules.append(nn.Linear(last_layer_dim, output_dim))
+#     if squash_output:
+#         modules.append(nn.Tanh())
+#     return modules
+
 
 class CombinedExtractor(nn.Module):
     '''to do feature_dim'''
-    def __init__(self, observation_space: gym.spaces.Dict, feature_dim = 128):
+
+    def __init__(self, observation_space: gym.spaces.Dict, feature_dim=128):
         super(CombinedExtractor, self).__init__()
         # We do not know features-dim here before going over all the items,
         # so put something dummy for now. PyTorch requires calling
@@ -86,7 +142,7 @@ class CombinedExtractor(nn.Module):
         # self.extractors contain nn.Modules that do all the processing.
         # for key, extractor in self.extractors.items():
         #     encoded_tensor_list.append(extractor(observations[key]))
-        encoded_tensor_list.append(self.extractors['image'](torch.FloatTensor(observations['image'])/255))
+        encoded_tensor_list.append(self.extractors['image'](torch.FloatTensor(observations['image']) / 255))
         encoded_tensor_list.append(self.extractors['target'](observations['target']))
         # Return a (B, self._features_dim) PyTorch tensor, where B is batch dimension.
         return torch.cat(encoded_tensor_list, dim=1)
@@ -127,7 +183,7 @@ class CNNfeature_extractor(nn.Module):
         # Re-ordering will be done by pre-preprocessing or wrapper
         print(observation_space.shape)
         n_input_channels = observation_space.shape[0]
-        #print(n_input_channels)
+        # print(n_input_channels)
         self.cnn = nn.Sequential(
             nn.Conv2d(n_input_channels, 64, kernel_size=3, stride=1, padding=0),
             nn.ReLU(),
@@ -153,9 +209,9 @@ class CNNfeature_extractor(nn.Module):
     @property
     def feature_dim(self):
         return self.features_dim
-    def forward(self, observations: torch.Tensor) -> torch.Tensor:
 
-        return self.linear(self.cnn(torch.FloatTensor(observations)/255))
+    def forward(self, observations: torch.Tensor) -> torch.Tensor:
+        return self.linear(self.cnn(torch.FloatTensor(observations) / 255))
 
 
 class MLPfeature_extractor(nn.Module):
@@ -164,13 +220,14 @@ class MLPfeature_extractor(nn.Module):
         input_dim = get_flattened_obs_dim(observation_space)
 
         self.modules_list = create_mlp(input_dim=input_dim,
-                                 net_arch=net_arch,
-                                 output_dim= features_dim
-                                 )
-        #print(self.modules_list)
+                                       net_arch=net_arch,
+                                       output_dim=features_dim
+                                       )
+        # print(self.modules_list)
         self.linear = nn.Sequential(*self.modules_list)
-        #self.linear = nn.Sequential(nn.Linear(observation_space.shape[0], features_dim), nn.ReLU())
+        # self.linear = nn.Sequential(nn.Linear(observation_space.shape[0], features_dim), nn.ReLU())
         self.features_dim = features_dim
+
     @property
     def feature_dim(self):
         return self.features_dim
@@ -183,7 +240,7 @@ class MLPfeature_extractor(nn.Module):
 
 
 class ddpg_actor(nn.Module):
-    def __init__(self, action_space, feature_extractor):
+    def __init__(self, action_space, feature_extractor, net_arch=[256, 256, 256]):
         super(ddpg_actor, self).__init__()
         self.feature_extractor = feature_extractor
 
@@ -191,30 +248,38 @@ class ddpg_actor(nn.Module):
 
         self.action_dim = get_action_dim(action_space)
 
-        self.linear = nn.Sequential(nn.Linear(feature_dim, 256), nn.ReLU(), nn.Linear(256, 256), nn.ReLU(),
-                                    nn.Linear(256, self.action_dim), nn.Tanh())
+        self.modules_list = create_mlp(input_dim=feature_dim,
+                                       net_arch=net_arch,
+                                       output_dim=self.action_dim
+                                       )
+
+        self.linear = nn.Sequential(*self.modules_list, nn.Tanh())
 
         self.limit_high = torch.tensor(action_space.high)
-        #print(self.limit_high)
+        # print(self.limit_high)
         self.limit_low = torch.tensor(action_space.low)
         # print(self.limit_low)
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-
         return (self.limit_high + self.limit_low) / 2 + (self.limit_high - self.limit_low) / 2 * self.linear(
             self.feature_extractor(observations))
 
 
 class ddpg_critic(nn.Module):
-    def __init__(self, action_space, feature_extractor):
+    def __init__(self, action_space, feature_extractor, net_arch=[256, 256, 256]):
         super(ddpg_critic, self).__init__()
         self.feature_extractor = feature_extractor
 
         feature_dim = self.feature_extractor.feature_dim
 
         self.action_dim = get_action_dim(action_space)
-        self.linear = nn.Sequential(nn.Linear(feature_dim + self.action_dim, 256), nn.ReLU(), nn.Linear(256, 256),
-                                    nn.ReLU(), nn.Linear(256, 1))
+
+        self.modules_list = create_mlp(input_dim=feature_dim + self.action_dim,
+                                       net_arch=net_arch,
+                                       output_dim=1
+                                       )
+
+        self.linear = nn.Sequential(*self.modules_list)
 
     def forward(self, observations: torch.Tensor, action: torch.Tensor) -> torch.Tensor:
         return self.linear(torch.cat([self.feature_extractor(observations), action], dim=-1))
@@ -233,7 +298,7 @@ class gail_discriminator(nn.Module):
 
 
 class dqn_critic(nn.Module):
-    def __init__(self, action_space, feature_extractor):
+    def __init__(self, action_space, feature_extractor, net_arch=[256, 256, 256]):
         super(dqn_critic, self).__init__()
         self.feature_extractor = feature_extractor
 
@@ -241,8 +306,12 @@ class dqn_critic(nn.Module):
 
         self.action_dim = action_space.n
 
-        self.linear = nn.Sequential(nn.Linear(feature_dim, 256), nn.ReLU(), nn.Linear(256, 256), nn.ReLU(),
-                                    nn.Linear(256, self.action_dim))
+        self.modules_list = create_mlp(input_dim=feature_dim,
+                                       net_arch=net_arch,
+                                       output_dim=self.action_dim
+                                       )
+
+        self.linear = nn.Sequential(*self.modules_list)
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
         # print(observations)
@@ -255,7 +324,7 @@ class Sac_actor(nn.Module):
 
     def __init__(
             self, action_space, hidden_dim, feature_extractor,
-             log_std_min, log_std_max
+            log_std_min, log_std_max
     ):
         super().__init__()
 
