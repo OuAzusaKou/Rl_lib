@@ -18,8 +18,8 @@ class BaseAlgorithm:
     def __init__(
             self,
             agent_class,
-            data_collection_dict: None,
-            env: None,
+            data_collection_dict: Dict,
+            env: Any,
             updator_dict=None,
             functor_dict=None,
             optimizer_dict=None,
