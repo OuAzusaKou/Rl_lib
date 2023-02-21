@@ -1,5 +1,6 @@
 from collections import namedtuple
 from random import random
+from typing import Union
 
 import numpy as np
 #import stable_baselines3
@@ -14,10 +15,10 @@ from gym import spaces
 
 class Replay_buffer:
     '''single agent replay_buffer'''
-    def __init__(self, env, size):
+    def __init__(self, env, size, device: Union[torch.device, str] = "auto"):
         self.obs_shape = get_obs_shape(env.observation_space)
         self.action_dim = get_action_dim(env.action_space)
-
+        self.device = device
         self.state_buf = np.zeros((int(size), *self.obs_shape), dtype=env.observation_space.dtype)
         self.next_state_buf = np.zeros((int(size), *self.obs_shape), dtype=env.observation_space.dtype)
 
@@ -45,17 +46,17 @@ class Replay_buffer:
                      action=self.action_buf[idxs],
                      reward=self.reward_buf[idxs],
                      done=self.done_buf[idxs])
-        return {k: torch.as_tensor(v.copy(), dtype=torch.float32) for k,v in batch.items()}
+        return {k: torch.as_tensor(v.copy(), dtype=torch.float32).to(self.device) for k,v in batch.items()}
 
     def __len__(self):
         return len(self.state_buf)
 
 class Dict_Replay_buffer:
     '''single agent dict_replay_buffer'''
-    def __init__(self, env, size):
+    def __init__(self, env, size, device: Union[torch.device, str] = "auto"):
         self.obs_shape = get_obs_shape(env.observation_space)
         self.action_dim = get_action_dim(env.action_space)
-
+        self.device = device
         assert isinstance(self.obs_shape, dict), "DictReplayBuffer must be used with Dict obs space only"
 
         self.state_buf = {
@@ -94,14 +95,14 @@ class Dict_Replay_buffer:
         state = {}
         next_state = {}
         for key, obs in self.state_buf.items():
-            state[key] = torch.as_tensor(obs[idxs].copy(), dtype=torch.float32)
+            state[key] = torch.as_tensor(obs[idxs].copy(), dtype=torch.float32).to(self.device)
         for key, obs in self.next_state_buf.items():
-            next_state[key] = torch.as_tensor(obs[idxs].copy(), dtype=torch.float32)
+            next_state[key] = torch.as_tensor(obs[idxs].copy(), dtype=torch.float32).to(self.device)
         batch = dict(state=state,
                      next_state=next_state,
-                     action=torch.as_tensor(self.action_buf[idxs].copy(), dtype=torch.float32),
-                     reward=torch.as_tensor(self.reward_buf[idxs].copy(), dtype=torch.float32),
-                     done=torch.as_tensor(self.done_buf[idxs].copy(), dtype=torch.float32))
+                     action=torch.as_tensor(self.action_buf[idxs].copy(), dtype=torch.float32).to(self.device),
+                     reward=torch.as_tensor(self.reward_buf[idxs].copy(), dtype=torch.float32).to(self.device),
+                     done=torch.as_tensor(self.done_buf[idxs].copy(), dtype=torch.float32)).to(self.device)
         #print(batch)
         return batch
 

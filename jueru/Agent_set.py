@@ -16,6 +16,7 @@ class Agent(ABC):
             functor_dict,
             optimizer_dict=None,
             lr_dict=None,
+            device=None,
             init=True,
     ):
 
@@ -24,7 +25,7 @@ class Agent(ABC):
         # self.discriminator = Discriminator(input_dim = (self.observation_space.n + self.action_space.n))
         self.functor_dict = functor_dict
         self.lr_dict = lr_dict
-
+        self.device = device
         if not self.lr_dict:
             self.lr_dict = {}
             for functor_name, functor in self.functor_dict.items():
@@ -47,6 +48,7 @@ class Agent(ABC):
                             lr=self.lr_dict[functor_name])
 
                 else:
+                    self.functor_dict[functor_name].requires_grad = True
                     self.optimizer_dict[functor_name] = torch.optim.Adam(params=[functor],
                                                                          lr=self.lr_dict[functor_name])
         else:
@@ -70,10 +72,12 @@ class Agent(ABC):
         for functor_name, functor in self.functor_dict.items():
 
             if 'target' in functor_name:
-                self.functor_dict[functor_name] = copy.deepcopy(self.functor_dict[functor_name.split('_')[0]])
+                self.functor_dict[functor_name] = copy.deepcopy(self.functor_dict[functor_name.split('_')[0]]).to(self.device)
             else:
                 if not isinstance(self.functor_dict[functor_name], torch.Tensor):
-                    self.functor_dict[functor_name].apply(weight_init)
+                    self.functor_dict[functor_name].apply(weight_init).to(self.device)
+                else:
+                    self.functor_dict[functor_name] = self.functor_dict[functor_name].to(self.device)
 
     def save(self, address):
         os.makedirs(address, exist_ok=True)
@@ -131,7 +135,7 @@ class Sac_agent(Agent):
                 mu, pi, _, _ = self.functor_dict['actor'](obs, compute_log_pi=False)
             else:
 
-                obs = torch.FloatTensor(obs)
+                obs = torch.FloatTensor(obs.copy())
                 obs = obs.unsqueeze(0)
                 mu, pi, _, _ = self.functor_dict['actor'](obs, compute_log_pi=False)
             print(pi)

@@ -30,6 +30,7 @@ class BaseAlgorithm:
             exploration_fraction: float = 0.2,
             polyak: float = 0.9,
             agent_args: Dict[str, Any] = None,
+            device: Union[torch.device, str] = "auto",
             max_episode_steps = None,
             eval_func = None,
             gamma: float = 0.95,
@@ -47,6 +48,7 @@ class BaseAlgorithm:
             eval_freq: int = 100,
             eval_num_episode: int = 10,
 
+
     ):
         self.env = env
         self.eval_func = eval_func
@@ -58,6 +60,7 @@ class BaseAlgorithm:
 
         os.makedirs(save_path, exist_ok=True)
 
+        self.device = device
         self.max_episode_steps = max_episode_steps
         self.eval_num_episode = eval_num_episode
         self.save_mode = save_mode
@@ -79,11 +82,13 @@ class BaseAlgorithm:
             self.agent = agent_class(functor_dict=functor_dict,
                                      optimizer_dict=optimizer_dict,
                                      lr_dict=lr_dict,
+                                     device=self.device,
                                      **agent_args)
         else:
             self.agent = agent_class(functor_dict=functor_dict,
                                      optimizer_dict=optimizer_dict,
                                      lr_dict=lr_dict,
+                                     device=self.device
                                      )
 
         self.updator_dict = updator_dict
@@ -105,6 +110,8 @@ class BaseAlgorithm:
         self.polyak = polyak
 
         self.start_steps = start_steps
+
+
 
 
 
