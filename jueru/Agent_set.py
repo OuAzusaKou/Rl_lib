@@ -120,6 +120,9 @@ class Sac_agent(Agent):
             else:
                 obs = torch.FloatTensor(obs)
                 obs = obs.unsqueeze(0)
+
+                obs.to(self.device)
+
                 mu, _, _, _ = self.functor_dict['actor'](
                     obs, compute_pi=False, compute_log_pi=False
                 )
@@ -137,8 +140,13 @@ class Sac_agent(Agent):
 
                 obs = torch.FloatTensor(obs.copy())
                 obs = obs.unsqueeze(0)
+                # print('device',obs.device)
+                self.functor_dict['actor'].to('cpu')
+                # print(self.device)
                 mu, pi, _, _ = self.functor_dict['actor'](obs, compute_log_pi=False)
-            print(pi)
+
+                self.functor_dict['actor'].to(self.device)
+            # print(pi)
             return pi.cpu().data.numpy().flatten()
 
     def predict(self, obs):

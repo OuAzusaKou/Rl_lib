@@ -18,12 +18,12 @@ def test_dqn():
 
     actor = Sac_actor(
         action_space=env.action_space, hidden_dim=128, feature_extractor=feature_extractor,
-        feature_dim=np.prod(env.observation_space.shape), log_std_min=-10, log_std_max=2
+        log_std_min=-10, log_std_max=2
     )
 
     critic = Sac_critic(
             action_space=env.action_space, feature_extractor=feature_extractor, hidden_dim=128,
-            feature_dim=np.prod(env.observation_space.shape)
+
         )
 
     log_alpha = torch.tensor(np.log(0.01))
@@ -79,3 +79,4 @@ def test_dqn():
                          )
 
     sac.learn(num_train_step=3500, actor_update_freq=2)
+
