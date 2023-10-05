@@ -123,9 +123,13 @@ class Sac_agent(Agent):
 
                 obs.to(self.device)
 
+                self.functor_dict['actor'].to('cpu')
+
                 mu, _, _, _ = self.functor_dict['actor'](
                     obs, compute_pi=False, compute_log_pi=False
                 )
+
+                self.functor_dict['actor'].to(self.device)
 
             return mu.cpu().data.numpy().flatten()
 
