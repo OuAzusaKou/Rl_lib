@@ -168,7 +168,12 @@ class BaseAlgorithm:
 
                 next_state, reward, done, _ = self.env.step(action)
 
+                if step >= self.max_episode_steps:
+                    done = True
+
                 done_value = 0 if done else 1
+                
+                
                 # ('state', 'action', 'reward', 'next_state', 'mask', 'log_prob')
                 #print(state)
                 self.data_collection_dict['replay_buffer'].store(state, action, reward, next_state, done_value)

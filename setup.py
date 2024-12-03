@@ -6,5 +6,9 @@ setup(
     packages=[package for package in find_packages() if package.startswith("jueru")],
     author='Zihang Wang, Jiayuan Li, Dunqi Yao',
     url='https://github.com/OuAzusaKou/Rl_lib',
-    license='MIT'
+    license='MIT',
+    include_package_data=True,
+    package_data={
+        '': ['*.py'],
+    }
 )

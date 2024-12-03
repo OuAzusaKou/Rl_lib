@@ -1,0 +1,37 @@
+# 依赖目录
+node_modules/
+vendor/
+
+# 编译输出
+dist/
+build/
+out/
+
+# IDE 和编辑器文件
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# 环境文件
+.env
+.env.local
+.env.*.local
+
+# 日志文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 测试覆盖率
+coverage/
+
+# 临时文件
+tmp/
+temp/
+
+# 系统文件
+Thumbs.db
+.DS_Store
