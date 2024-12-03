@@ -48,6 +48,7 @@ class Agent(ABC):
                             lr=self.lr_dict[functor_name])
 
                 else:
+                    print('functor_name',functor_name)
                     self.functor_dict[functor_name].requires_grad = True
                     self.optimizer_dict[functor_name] = torch.optim.Adam(params=[functor],
                                                                          lr=self.lr_dict[functor_name])

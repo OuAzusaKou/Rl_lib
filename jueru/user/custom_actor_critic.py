@@ -211,7 +211,10 @@ class CNNfeature_extractor(nn.Module):
         return self.features_dim
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        return self.linear(self.cnn(torch.FloatTensor(observations) / 255))
+        float_tensor = observations / 255
+        feature = self.cnn(float_tensor)
+        
+        return self.linear(feature)
 
 
 class MLPfeature_extractor(nn.Module):
@@ -328,6 +331,7 @@ class Sac_actor(nn.Module):
     ):
         super().__init__()
 
+
         self.feature_extractor = feature_extractor
 
         feature_dim = self.feature_extractor.feature_dim
@@ -347,6 +351,10 @@ class Sac_actor(nn.Module):
     def forward(
             self, obs, compute_pi=True, compute_log_pi=True
     ):
+        
+        # print('obs', obs.device)
+        # print('feature_extractor', next(self.feature_extractor.parameters()).device)
+
         obs = self.feature_extractor(obs)
 
         mu, log_std = self.trunk(obs).chunk(2, dim=-1)

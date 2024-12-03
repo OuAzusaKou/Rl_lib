@@ -126,6 +126,9 @@ class BaseAlgorithm:
             action = self.agent.predict(obs)
             obs, reward, done, info = self.env.step(action)
             episode_reward += reward
+            if self.max_episode_steps:
+                if step >= self.max_episode_steps:
+                    done = True
             # env.render()
             if done:
                 if reward > 0:
